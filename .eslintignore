@@ -1,0 +1,6 @@
+node_modules/
+tsc/
+dist/
+.prettierrc.js
+.eslintrc.js
+env.d.ts
