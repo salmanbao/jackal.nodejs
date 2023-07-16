@@ -178,7 +178,7 @@ export class NotificationHandler implements INotificationHandler {
       )
     const pubKey = await this.walletRef.findPubKey(address)
     const baseNoti = { type }
-    const bufNoti = new TextEncoder().encode(JSON.stringify(baseNoti))
+    const bufNoti = Buffer.from(JSON.stringify(baseNoti))
     return this.makeNotification(
       this.walletRef.asymmetricEncrypt(bufNoti, pubKey),
       address

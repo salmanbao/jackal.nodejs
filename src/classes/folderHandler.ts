@@ -1,4 +1,3 @@
-import { Blob } from 'node:buffer'
 
 import { EncodeObject } from '@cosmjs/proto-signing'
 import {
@@ -13,7 +12,6 @@ import { IFolderHandler, IWalletHandler } from '@/interfaces/classes'
 import { signerNotEnabled, stripper } from '@/utils/misc'
 import { merkleMeBro } from '@/utils/hash'
 import { saveFileTreeEntry } from '@/utils/compression'
-import { convertFromEncryptedFile } from '@/utils/crypt'
 
 export class FolderHandler implements IFolderHandler {
   private readonly folderDetails: IFolderFileFrame
@@ -26,16 +24,6 @@ export class FolderHandler implements IFolderHandler {
 
   static async trackFolder(dirInfo: IFolderFileFrame): Promise<IFolderHandler> {
     return new FolderHandler(dirInfo)
-  }
-  static async trackLegacyFolder(
-    data: Blob,
-    key: CryptoKey,
-    iv: Uint8Array
-  ): Promise<IFolderHandler> {
-    const folderDetails = JSON.parse(
-      await (await convertFromEncryptedFile(data, key, iv)).text()
-    )
-    return new FolderHandler(folderDetails)
   }
   static async trackNewFolder(dirInfo: IChildDirInfo): Promise<IFolderHandler> {
     const folderDetails: IFolderFileFrame = {
@@ -80,8 +68,7 @@ export class FolderHandler implements IFolderHandler {
       this.getWhereAmI(),
       this.getWhoAmI(),
       this.folderDetails,
-      walletRef,
-      true
+      walletRef
     )
   }
   async getChildMerkle(child: string): Promise<string> {

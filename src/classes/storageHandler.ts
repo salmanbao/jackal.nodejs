@@ -183,8 +183,7 @@ export class StorageHandler implements IStorageHandler {
       this.sharingRoot,
       receiverAddress,
       shared,
-      this.walletRef,
-      true
+      this.walletRef
     )
   }
 
@@ -203,8 +202,7 @@ export class StorageHandler implements IStorageHandler {
     const shared = await readFileTreeEntry(
       owner,
       `${this.sharingRoot}/${receiverAddress}`,
-      this.walletRef,
-      true
+      this.walletRef
     ).catch((err: Error) => {
       throw new Error(
         `Storage.Handler - readSharing() JSON Parse Failed: ${err.message}`

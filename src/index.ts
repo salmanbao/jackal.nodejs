@@ -9,7 +9,6 @@ export * from '@/classes/govHandler'
 export * from '@/classes/notificationHandler'
 export * from '@/classes/oracleHandler'
 export * from '@/classes/rnsHandler'
-export * from '@/classes/secretsHandler'
 export * from '@/classes/storageHandler'
 export * from '@/classes/walletHandler'
 

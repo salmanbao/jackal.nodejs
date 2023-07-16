@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import {
   AccountData,
   EncodeObject,
@@ -19,7 +20,6 @@ import {
   IProtoHandler,
   IQueryHandler,
   IRnsHandler,
-  ISecretsHandler,
   IStorageHandler,
   IWalletHandler
 } from '@/interfaces/classes'
@@ -42,7 +42,6 @@ import {
   NotificationHandler,
   OracleHandler,
   RnsHandler,
-  SecretsHandler,
   StorageHandler
 } from '@/index'
 import { QueryHandler } from '@/classes/queryHandler'
@@ -311,12 +310,12 @@ export class WalletHandler implements IWalletHandler {
 
   /**
    * Encrypt value using public key from either findPubKey() or getPubkey(). Half of an asymmetric keypair.
-   * @param {ArrayBuffer} toEncrypt - Value to encrypt.
+   * @param {Buffer} toEncrypt - Value to encrypt.
    * @param {string} pubKey - Public key as hex value.
    * @returns {string} - Encrypted value.
    */
-  asymmetricEncrypt(toEncrypt: ArrayBuffer, pubKey: string): string {
-    return encrypt(pubKey, Buffer.from(toEncrypt)).toString('hex')
+  asymmetricEncrypt(toEncrypt: Buffer, pubKey: string): string {
+    return encrypt(pubKey, toEncrypt).toString('hex')
   }
 
   /**
@@ -324,12 +323,10 @@ export class WalletHandler implements IWalletHandler {
    * @param {string} toDecrypt - Value to decrypt.
    * @returns {ArrayBuffer} - Decrypted value.
    */
-  asymmetricDecrypt(toDecrypt: string): ArrayBuffer {
+  asymmetricDecrypt(toDecrypt: string): Buffer {
     if (!this.properties)
       throw new Error(signerNotEnabled('WalletHandler', 'asymmetricDecrypt'))
-    return new Uint8Array(
-      decrypt(this.properties.keyPair.toHex(), Buffer.from(toDecrypt, 'hex'))
-    )
+    return decrypt(this.properties.keyPair.toHex(), Buffer.from(toDecrypt, 'hex'))
   }
 
   /**
@@ -398,18 +395,6 @@ export class WalletHandler implements IWalletHandler {
    */
   async makeRnsHandler(): Promise<IRnsHandler> {
     return await RnsHandler.trackRns(this)
-  }
-  /** TODO */
-  // async makeSecretsHandler (enable: IEnabledSecrets): Promise<ISecretsHandler> {
-  //   return await SecretsHandler.trackSecrets(this, enable)
-  // }
-
-  /**
-   * Create SecretsHandler instance and link to query or signing WalletHandler instance.
-   * @returns {Promise<ISecretsHandler>}
-   */
-  async makeSecretsHandler(): Promise<ISecretsHandler> {
-    return await SecretsHandler.trackSecrets(this)
   }
 
   /**

@@ -1,7 +1,6 @@
 import { AccountData, OfflineSigner } from '@cosmjs/proto-signing'
 import {
   ICoin,
-  IEnabledSecrets,
   IWalletConfig,
   IWalletHandlerPublicProperties
 } from '@/interfaces'
@@ -14,7 +13,6 @@ import {
   IProtoHandler,
   IQueryHandler,
   IRnsHandler,
-  ISecretsHandler,
   IStorageHandler
 } from '@/interfaces/classes'
 
@@ -36,8 +34,8 @@ export interface IWalletHandler {
   getAllBalances(): Promise<ICoin[]>
   getJackalBalance(): Promise<ICoin>
   getPubkey(): string
-  asymmetricEncrypt(toEncrypt: ArrayBuffer, pubKey: string): string
-  asymmetricDecrypt(toDecrypt: string): ArrayBuffer
+  asymmetricEncrypt(toEncrypt: Buffer, pubKey: string): string
+  asymmetricDecrypt(toDecrypt: string): Buffer
   findPubKey(address: string): Promise<string>
 
   /**
@@ -49,6 +47,5 @@ export interface IWalletHandler {
   makeNotificationHandler(): Promise<INotificationHandler>
   makeOracleHandler(): Promise<IOracleHandler>
   makeRnsHandler(): Promise<IRnsHandler>
-  makeSecretsHandler(enable: IEnabledSecrets): Promise<ISecretsHandler>
   makeStorageHandler(): Promise<IStorageHandler>
 }

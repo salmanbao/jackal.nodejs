@@ -1,4 +1,5 @@
-import {webcrypto} from 'node:crypto'
+import {randomUUID} from 'node:crypto'
+import {Buffer} from 'node:buffer'
 
 import { IAesBundle } from '@/interfaces'
 import { IFileMeta } from '@/interfaces/file'
@@ -8,8 +9,8 @@ import { hexFullPath, merkleMeBro } from '@/utils/hash'
 
 export class FileUploadHandler implements IFileUploadHandler {
   private readonly file: File
-  private key: CryptoKey
-  private iv: Uint8Array
+  private key: Buffer
+  private iv: Buffer
   private readonly parentPath: string
   private uuid: string
   private cid: string
@@ -20,8 +21,8 @@ export class FileUploadHandler implements IFileUploadHandler {
     file: File,
     parentPath: string,
     uuid: string,
-    key: CryptoKey,
-    iv: Uint8Array
+    key: Buffer,
+    iv: Buffer
   ) {
     this.file = file
     this.key = key
@@ -38,7 +39,7 @@ export class FileUploadHandler implements IFileUploadHandler {
   ): Promise<IFileUploadHandler> {
     const savedKey = await genKey()
     const savedIv = genIv()
-    const uuid = webcrypto.randomUUID()
+    const uuid = randomUUID()
     return new FileUploadHandler(file, parentPath, uuid, savedKey, savedIv)
   }
 

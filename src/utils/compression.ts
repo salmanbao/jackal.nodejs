@@ -1,47 +1,12 @@
-import {webcrypto} from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 
-import { Plzsu } from '@karnthis/plzsu'
-import {
-  IEditorsViewers,
-  IMsgPartialPostFileBundle,
-  IPermsParts
-} from '@/interfaces'
+import { IEditorsViewers, IMsgPartialPostFileBundle, IPermsParts } from '@/interfaces'
 import { EncodeObject } from '@cosmjs/proto-signing'
-import {
-  aesToString,
-  compressEncryptString,
-  cryptString,
-  decryptDecompressString,
-  genIv,
-  genKey,
-  stringToAes
-} from '@/utils/crypt'
+import { aesToString, cryptString, genIv, genKey, stringToAes } from '@/utils/crypt'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
 import { Files } from 'jackal.nodejs-protos'
 import { IProtoHandler, IWalletHandler } from '@/interfaces/classes'
 import { getFileTreeData } from '@/utils/misc'
-
-const PLZSU = new Plzsu()
-
-/**
- * Compresses string using PLZSU compression library.
- * @param {string} input - String to compress.
- * @returns {string} - Compressed string.
- */
-export function compressData(input: string): string {
-  return `jklpc1${PLZSU.compress(input)}`
-}
-
-/**
- * Decompresses string using PLZSU compression library.
- * @param {string} input - String to decompress.
- * @returns {string} - Decompressed string.
- */
-export function decompressData(input: string): string {
-  if (!input.startsWith('jklpc1'))
-    throw new Error('Invalid Decompression String')
-  return PLZSU.decompress(input.substring(6))
-}
 
 /**
  * Save encrypted data to FileTree path with optional compression.
@@ -50,20 +15,18 @@ export function decompressData(input: string): string {
  * @param {string} rawTarget - Specific entry to store to.
  * @param {{[p: string]: any}} rawContents - Data object to store.
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
- * @param {boolean} compress - Optional boolean to flag if rawContents should be compressed.
  * @returns {Promise<EncodeObject>} - FileTree msg to save entry.
  */
-export async function saveFileTreeEntry(
+export async function saveFileTreeEntry (
   toAddress: string,
   rawPath: string,
   rawTarget: string,
   rawContents: { [key: string]: any },
-  walletRef: IWalletHandler,
-  compress?: boolean
+  walletRef: IWalletHandler
 ): Promise<EncodeObject> {
   const aes = {
     iv: genIv(),
-    key: await genKey()
+    key: genKey()
   }
   const creator = walletRef.getJackalAddress()
   const account = await hashAndHex(creator)
@@ -73,29 +36,17 @@ export async function saveFileTreeEntry(
     contents: '',
     hashParent: await merkleMeBro(rawPath),
     hashChild: await hashAndHex(rawTarget),
-    trackingNumber: webcrypto.randomUUID(),
+    trackingNumber: randomUUID(),
     editors: '',
     viewers: ''
   }
-  console.log('saveFileTreeEntry - compress:', compress)
-  console.log('saveFileTreeEntry - rawPath:', rawPath)
-  console.log('saveFileTreeEntry - rawTarget:', rawTarget)
-  console.log('saveFileTreeEntry - aes:', aes)
 
-  if (compress) {
-    msg.contents = await compressEncryptString(
-      JSON.stringify(rawContents),
-      aes.key,
-      aes.iv
-    )
-  } else {
-    msg.contents = await cryptString(
-      JSON.stringify(rawContents),
-      aes.key,
-      aes.iv,
-      'encrypt'
-    )
-  }
+  msg.contents = await cryptString(
+    JSON.stringify(rawContents),
+    aes.key,
+    aes.iv,
+    'encrypt'
+  )
   const basePerms: any = {
     num: msg.trackingNumber,
     aes
@@ -107,11 +58,11 @@ export async function saveFileTreeEntry(
     usr: creator
   }
   msg.editors = JSON.stringify(
-    await makePermsBlock({ base: 'e', ...me }, walletRef)
+    await makePermsBlock({base: 'e', ...me}, walletRef)
   )
   if (toAddress === creator) {
     msg.viewers = JSON.stringify(
-      await makePermsBlock({ base: 'v', ...me }, walletRef)
+      await makePermsBlock({base: 'v', ...me}, walletRef)
     )
   } else {
     const destPubKey = await walletRef.findPubKey(toAddress)
@@ -121,11 +72,10 @@ export async function saveFileTreeEntry(
       usr: toAddress
     }
     msg.viewers = JSON.stringify({
-      ...(await makePermsBlock({ base: 'v', ...me }, walletRef)),
-      ...(await makePermsBlock({ base: 'v', ...them }, walletRef))
+      ...(await makePermsBlock({base: 'v', ...me}, walletRef)),
+      ...(await makePermsBlock({base: 'v', ...them}, walletRef))
     })
   }
-  console.log('saveFileTreeEntry - end')
   return buildPostFile(msg, walletRef.getProtoHandler())
 }
 
@@ -137,11 +87,10 @@ export async function saveFileTreeEntry(
  * @param {boolean} decompress - Optional boolean to flag if retrieved data should be decompressed.
  * @returns {Promise<{[p: string]: any}>} - Stored data object.
  */
-export async function readFileTreeEntry(
+export async function readFileTreeEntry (
   owner: string,
   rawPath: string,
-  walletRef: IWalletHandler,
-  decompress?: boolean
+  walletRef: IWalletHandler
 ): Promise<{ [key: string]: any }> {
   const result = await getFileTreeData(
     rawPath,
@@ -153,39 +102,23 @@ export async function readFileTreeEntry(
     return {}
   } else {
     try {
-      const { contents, viewingAccess, trackingNumber } = result.value
+      const {contents, viewingAccess, trackingNumber} = result.value
         .files as Files
       const parsedVA = JSON.parse(viewingAccess)
       const viewName = await hashAndHex(
         `v${trackingNumber}${walletRef.getJackalAddress()}`
       )
       const keys = await stringToAes(walletRef, parsedVA[viewName])
-      console.log('readFileTreeEntry - rawPath:', rawPath)
-      console.log('readFileTreeEntry - keys:', keys)
-      console.log('readFileTreeEntry - decompress:', decompress)
-
-      if (decompress) {
-        const final = await decryptDecompressString(
-          contents,
-          keys.key,
-          keys.iv
-        ).catch((err: Error) => {
-          console.error(err)
-          return contents
-        })
-        return JSON.parse(final)
-      } else {
-        const final = await cryptString(
-          contents,
-          keys.key,
-          keys.iv,
-          'decrypt'
-        ).catch((err: Error) => {
-          console.error(err)
-          return '{}'
-        })
-        return JSON.parse(final)
-      }
+      const final = await cryptString(
+        contents,
+        keys.key,
+        keys.iv,
+        'decrypt'
+      ).catch((err: Error) => {
+        console.error(err)
+        return '{}'
+      })
+      return JSON.parse(final)
     } catch (err: any) {
       throw err
     }
@@ -198,7 +131,7 @@ export async function readFileTreeEntry(
  * @param {IWalletHandler} walletRef
  * @returns {Promise<EncodeObject>}
  */
-export async function removeFileTreeEntry(
+export async function removeFileTreeEntry (
   rawPath: string,
   walletRef: IWalletHandler
 ): Promise<EncodeObject> {
@@ -217,7 +150,7 @@ export async function removeFileTreeEntry(
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
  * @returns {Promise<IEditorsViewers>} - Completed permissions block.
  */
-export async function makePermsBlock(
+export async function makePermsBlock (
   parts: IPermsParts,
   walletRef: IWalletHandler
 ): Promise<IEditorsViewers> {
@@ -233,7 +166,7 @@ export async function makePermsBlock(
  * @param {IProtoHandler} pH - ProtoHandler instance for accessing msgPostFile function.
  * @returns {Promise<EncodeObject>} - Encoded msgPostFile in correct order.
  */
-export async function buildPostFile(
+export async function buildPostFile (
   data: IMsgPartialPostFileBundle,
   pH: IProtoHandler
 ): Promise<EncodeObject> {

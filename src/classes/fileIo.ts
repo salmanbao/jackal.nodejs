@@ -1,5 +1,5 @@
-import { webcrypto } from 'node:crypto'
-import { Blob } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
+import { Buffer } from 'node:buffer'
 
 import { EncodeObject } from '@cosmjs/proto-signing'
 // import { random } from 'make-random'
@@ -145,8 +145,7 @@ export class FileIo implements IFileIo {
       const data = await readFileTreeEntry(
         owner,
         `s/${name}`,
-        this.walletRef,
-        true
+        this.walletRef
       ).catch((err: Error) => {
         throw err
       })
@@ -210,8 +209,7 @@ export class FileIo implements IFileIo {
       const check = await readFileTreeEntry(
         owner,
         `s/${toCheck[i]}`,
-        this.walletRef,
-        true
+        this.walletRef
       ).catch((err: Error) => {
         console.warn(`verifyFoldersExist() s/${toCheck[i]}`, err)
         throw err
@@ -328,7 +326,7 @@ export class FileIo implements IFileIo {
         const { cid, fid } = item.handler.getIds()
         const common = {
           aes: await item.handler.getEnc(),
-          num: webcrypto.randomUUID(),
+          num: randomUUID(),
           pubKey: this.walletRef.getPubkey(),
           usr: this.walletRef.getJackalAddress()
         }
@@ -376,25 +374,12 @@ export class FileIo implements IFileIo {
     const data = await readFileTreeEntry(
       owner,
       rawPath,
-      this.walletRef,
-      true
+      this.walletRef
     ).catch((err: Error) => {
       throw err
     })
 
-    if (data.fids) {
-      const legacyBundle: IDownloadDetails = {
-        rawPath,
-        owner,
-        isFolder: true
-      }
-      const legacyHandler = await this.downloadFile(legacyBundle, {
-        track: 0
-      }).catch((err: Error) => {
-        console.error('downloadFolder() : ', err)
-      })
-      return legacyHandler as IFolderHandler
-    } else if (Object.keys(data).length === 0) {
+    if (Object.keys(data).length === 0) {
       console.warn('Folder recovery failed. Rebuilding ', rawPath)
       const parts = rawPath.split('/')
       const child = parts.pop() as string
@@ -411,10 +396,10 @@ export class FileIo implements IFileIo {
   async downloadFile(
     downloadDetails: IDownloadDetails,
     completion: { track: number }
-  ): Promise<IFileDownloadHandler | IFolderHandler> {
+  ): Promise<IFileDownloadHandler> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'downloadFile'))
-    const { rawPath, owner, isFolder } = downloadDetails
+    const { rawPath, owner } = downloadDetails
     const {
       success,
       value: { files }
@@ -458,21 +443,18 @@ export class FileIo implements IFileIo {
             if (done) {
               break
             }
-            chunks.push(value)
+            chunks.push(...value)
             receivedLength += value.length
             completion.track =
               Math.floor((receivedLength / Number(contentLength)) * 100) || 1
           }
-          const rawFile = new Blob(chunks)
+          // Buffer.from(chunks)
+          // const rawFile = new Blob(chunks)
           const { key, iv } = await stringToAes(
             this.walletRef,
             config.viewingAccess[requester]
           )
-          if (isFolder) {
-            return await FolderHandler.trackLegacyFolder(rawFile, key, iv)
-          } else {
-            return await FileDownloadHandler.trackFile(rawFile, key, iv)
-          }
+          return await FileDownloadHandler.trackFile(Buffer.from(chunks), key, iv)
         } catch (err: any) {
           const attempt = i + 1
           const remaining = fileProviders.length - attempt
@@ -485,18 +467,7 @@ export class FileIo implements IFileIo {
       }
       throw new Error('All file fetch() attempts failed!')
     } else {
-      if (isFolder) {
-        console.warn(`Critical folder recovery failure. Rebuilding: ${rawPath}`)
-        const pathArray = rawPath.split('/')
-        const myName = pathArray.pop() || ''
-        return await FolderHandler.trackNewFolder({
-          myName,
-          myParent: pathArray.join('/'),
-          myOwner: owner
-        })
-      } else {
-        throw new Error('No available providers!')
-      }
+      throw new Error('No available providers!')
     }
   }
   async deleteHome(): Promise<void> {
@@ -678,8 +649,7 @@ export class FileIo implements IFileIo {
       const data = await readFileTreeEntry(
         owner,
         rawPath,
-        this.walletRef,
-        true
+        this.walletRef
       ).catch((err: Error) => {
         throw err
       })
@@ -786,7 +756,7 @@ export class FileIo implements IFileIo {
         iv: genIv(),
         key: await genKey()
       },
-      num: webcrypto.randomUUID(),
+      num: randomUUID(),
       pubKey: this.walletRef.getPubkey(),
       usr: this.walletRef.getJackalAddress()
     }

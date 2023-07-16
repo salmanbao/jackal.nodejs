@@ -1,4 +1,4 @@
-import { Blob } from 'node:buffer'
+import { Buffer } from 'node:buffer'
 
 import { IFileDownloadHandler } from '@/interfaces/classes'
 import { convertFromEncryptedFile } from '@/utils/crypt'
@@ -11,9 +11,9 @@ export class FileDownloadHandler implements IFileDownloadHandler {
   }
 
   static async trackFile(
-    file: Blob,
-    key: CryptoKey,
-    iv: Uint8Array
+    file: Buffer,
+    key: Buffer,
+    iv: Buffer
   ): Promise<IFileDownloadHandler> {
     const decryptedFile: File = await convertFromEncryptedFile(file, key, iv)
     return new FileDownloadHandler(decryptedFile)
