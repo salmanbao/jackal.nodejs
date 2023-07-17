@@ -13,7 +13,7 @@ export class FileDownloadHandler implements IFileDownloadHandler {
   static async trackFile(
     file: Buffer,
     key: CryptoKey,
-    iv: Buffer
+    iv: Uint8Array
   ): Promise<IFileDownloadHandler> {
     const decryptedFile: File = await convertFromEncryptedFile(file, key, iv)
     return new FileDownloadHandler(decryptedFile)

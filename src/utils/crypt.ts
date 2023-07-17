@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { randomBytes, webcrypto } from 'node:crypto'
+import { getRandomValues, webcrypto } from 'node:crypto'
 import { keyAlgo } from '@/utils/globals'
 import { hashAndHex } from '@/utils/hash'
 import { IWalletHandler } from '@/interfaces/classes'
@@ -10,18 +10,18 @@ const { subtle } = webcrypto
 /**
  * Convert CryptoKey to storable format (see importJackalKey()).
  * @param {CryptoKey} key - CryptoKey to convert.
- * @returns {Promise<Buffer>} - CryptoKey as Uint8Array.
+ * @returns {Promise<Uint8Array>} - CryptoKey as Uint8Array.
  */
-export async function exportJackalKey(key: CryptoKey): Promise<Buffer> {
-  return Buffer.from(await subtle.exportKey('raw', key))
+export async function exportJackalKey(key: CryptoKey): Promise<Uint8Array> {
+  return new Uint8Array(await subtle.exportKey('raw', key))
 }
 
 /**
  * Convert stored format to CryptoKey (see exportJackalKey()).
- * @param {Buffer} rawExport - Uint8Array to recover to CryptoKey.
+ * @param {Uint8Array} rawExport - Uint8Array to recover to CryptoKey.
  * @returns {Promise<CryptoKey>} - Recovered CryptoKey.
  */
-export function importJackalKey(rawExport: Buffer): Promise<CryptoKey> {
+export function importJackalKey(rawExport: Uint8Array): Promise<CryptoKey> {
   return subtle.importKey('raw', rawExport, 'AES-GCM', true, [
     'encrypt',
     'decrypt'
@@ -38,11 +38,11 @@ export async function genKey(): Promise<CryptoKey> {
 
 /**
  * Generate a new iv from scratch. Compatible with AES-256.
- * @returns {Buffer} - Fresh random iv.
+ * @returns {Uint8Array} - Fresh random iv.
  */
-export function genIv(): Buffer {
-  // return crypto.getRandomValues(new Uint8Array(16))
-  return randomBytes(16)
+export function genIv(): Uint8Array {
+  return getRandomValues(new Uint8Array(16))
+  // return randomBytes(16)
 }
 
 /**
@@ -56,7 +56,7 @@ export function genIv(): Buffer {
 export async function aesCrypt(
   data: Buffer,
   key: CryptoKey,
-  iv: Buffer,
+  iv: Uint8Array,
   mode: 'encrypt' | 'decrypt'
 ): Promise<Buffer> {
   const algo = {
@@ -130,13 +130,13 @@ export async function stringToAes(
  * Converts raw File to encrypted File.
  * @param {File} workingFile - Source File.
  * @param {CryptoKey} key - AES-256 CryptoKey.
- * @param {Buffer} iv - AES-256 iv.
+ * @param {Uint8Array} iv - AES-256 iv.
  * @returns {Promise<File>} - Encrypted File.
  */
 export async function convertToEncryptedFile(
   workingFile: File,
   key: CryptoKey,
-  iv: Buffer
+  iv: Uint8Array
 ): Promise<File> {
 
   const chunkSize = 32 * Math.pow(1024, 2) /** in bytes */
@@ -175,24 +175,28 @@ export async function convertToEncryptedFile(
  * @returns {Promise<File>} - Decrypted File.
  */
 export async function convertFromEncryptedFile(
-  source: Buffer,
+  source: Buffer, 
   key: CryptoKey,
-  iv: Buffer
+  iv: Uint8Array
 ): Promise<File> {
 
   let detailsBuf = Buffer.from('')
   const bufParts: Buffer[] = []
   for (let i = 0; i < source.length; ) {
     const offset = i + 8
+    console.log('convertFromEncryptedFile - offset:', offset)
     const segSize = Number(source.slice(i, offset).toString())
+    console.log('convertFromEncryptedFile - segSize:', segSize)
     const last = offset + segSize
     const segment = source.slice(offset, last)
+    console.log('convertFromEncryptedFile - segment.toString():', segment.toString())
+    console.log('convertFromEncryptedFile - segment.length:', segment.length)
 
-    await aesCrypt(segment, key, iv, 'decrypt')
+    const dec = await aesCrypt(segment, key, iv, 'decrypt')
     if (i === 0) {
-      detailsBuf = segment
+      detailsBuf = dec
     } else {
-      bufParts.push(segment)
+      bufParts.push(dec)
     }
     i = last
   }
@@ -214,7 +218,7 @@ export async function convertFromEncryptedFile(
 export async function cryptString(
   input: string,
   key: CryptoKey,
-  iv: Buffer,
+  iv: Uint8Array,
   mode: 'encrypt' | 'decrypt'
 ): Promise<string> {
   if (mode === 'encrypt') {

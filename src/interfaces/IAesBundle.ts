@@ -1,6 +1,4 @@
-import { Buffer } from 'node:buffer'
-
 export interface IAesBundle {
-  iv: Buffer
+  iv: Uint8Array
   key: CryptoKey
 }

@@ -1,5 +1,4 @@
 import {randomUUID} from 'node:crypto'
-import {Buffer} from 'node:buffer'
 
 import { IAesBundle } from '@/interfaces'
 import { IFileMeta } from '@/interfaces/file'
@@ -10,7 +9,7 @@ import { hexFullPath, merkleMeBro } from '@/utils/hash'
 export class FileUploadHandler implements IFileUploadHandler {
   private readonly file: File
   private key: CryptoKey
-  private iv: Buffer
+  private iv: Uint8Array
   private readonly parentPath: string
   private uuid: string
   private cid: string
@@ -22,7 +21,7 @@ export class FileUploadHandler implements IFileUploadHandler {
     parentPath: string,
     uuid: string,
     key: CryptoKey,
-    iv: Buffer
+    iv: Uint8Array
   ) {
     this.file = file
     this.key = key

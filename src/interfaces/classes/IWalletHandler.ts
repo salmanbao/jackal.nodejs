@@ -34,8 +34,8 @@ export interface IWalletHandler {
   getAllBalances(): Promise<ICoin[]>
   getJackalBalance(): Promise<ICoin>
   getPubkey(): string
-  asymmetricEncrypt(toEncrypt: Buffer, pubKey: string): string
-  asymmetricDecrypt(toDecrypt: string): Buffer
+  asymmetricEncrypt(toEncrypt: Uint8Array, pubKey: string): string
+  asymmetricDecrypt(toDecrypt: string): Uint8Array
   findPubKey(address: string): Promise<string>
 
   /**
