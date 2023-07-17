@@ -26,7 +26,7 @@ export async function saveFileTreeEntry (
 ): Promise<EncodeObject> {
   const aes = {
     iv: genIv(),
-    key: genKey()
+    key: await genKey()
   }
   const creator = walletRef.getJackalAddress()
   const account = await hashAndHex(creator)

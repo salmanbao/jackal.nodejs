@@ -9,7 +9,7 @@ import { hexFullPath, merkleMeBro } from '@/utils/hash'
 
 export class FileUploadHandler implements IFileUploadHandler {
   private readonly file: File
-  private key: Buffer
+  private key: CryptoKey
   private iv: Buffer
   private readonly parentPath: string
   private uuid: string
@@ -21,7 +21,7 @@ export class FileUploadHandler implements IFileUploadHandler {
     file: File,
     parentPath: string,
     uuid: string,
-    key: Buffer,
+    key: CryptoKey,
     iv: Buffer
   ) {
     this.file = file
