@@ -22,8 +22,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./tsc && rollup -c",
-    "roll": "rollup -c",
+    "build": "tsc -p tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./tsc && npm run tidy",
+    "tidy": "rollup -c && rm -R dist/tsc",
     "packit": "npm run build && npm pack --pack-destination packs",
     "gen-docs": "npx typedoc"
   },
@@ -49,21 +49,14 @@
   "homepage": "https://github.com/JackalLabs/jackal.nodejs/#README",
   "dependencies": {
     "@cosmjs/launchpad": "^0.27.1",
-    "@cosmjs/proto-signing": "0.31.0",
-    "@cosmjs/stargate": "0.31.0",
-    "bech32": "^2.0.0",
-    "bip32": "^3.0.1",
-    "bip39": "3.1.0",
-    "bs58check": "3.0.1",
-    "eciesjs": "0.4.0",
-    "global": "^4.4.0",
-    "jackal.nodejs-protos": "file:jackal.nodejs-protos-0.0.1.tgz",
-    "make-random": "^3.0.2"
+    "@cosmjs/proto-signing": "^0.31.0",
+    "@cosmjs/stargate": "^0.31.0",
+    "eciesjs": "^0.4.2",
+    "jackal.nodejs-protos": "file:jackal.nodejs-protos-0.0.1.tgz"
   },
   "devDependencies": {
-    "@btmills/prettier": "2.8.8",
+    "@btmills/prettier": "^2.8.8",
     "@rollup/plugin-typescript": "^11.1.1",
-    "@types/bs58check": "^2.1.0",
     "@types/node": "^18.7.18",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",

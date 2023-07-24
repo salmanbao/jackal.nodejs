@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 
 import { EncodeObject } from '@cosmjs/proto-signing'
-// import { random } from 'make-random'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
 import { genIv, genKey, stringToAes } from '@/utils/crypt'
 import {

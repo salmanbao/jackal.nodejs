@@ -5,7 +5,7 @@ import dts from 'rollup-plugin-dts'
 export default [
   {
     treeshake: false,
-    input: "./tsc/index.js",
+    input: "tsc/index.js",
     output: [
       { file: "dist/index.cjs", format: "cjs" },
       { file: "dist/index.mjs", format: "es" }
@@ -18,9 +18,9 @@ export default [
   },
   {
     treeshake: false,
-    input: "./tsc/index.d.ts",
+    input: "tsc/index.d.ts",
     output: [
-      { file: "dist/index.d.ts", format: "es" }
+      { file: "dist/index.d.ts", format: "cjs" }
     ],
     plugins: [
       typescript(),
