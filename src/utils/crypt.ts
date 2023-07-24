@@ -148,16 +148,19 @@ export async function convertToEncryptedFile(
     }
   const detailsBuf = Buffer.from(JSON.stringify(details))
   const encryptedArray: Buffer[] = [
-    Buffer.from((detailsBuf.length + 8).toString().padStart(8, '0')),
+    Buffer.from((detailsBuf.length + 16).toString().padStart(8, '0')),
+    // Buffer.from((detailsBuf.length).toString().padStart(8, '0')),
     await aesCrypt(detailsBuf, key, iv, 'encrypt')
   ]
   for (let i = 0; i < workingFile.size; i += chunkSize) {
     const bufChunk = Buffer.from(await workingFile.slice(i, i + chunkSize).arrayBuffer())
     encryptedArray.push(
-      Buffer.from((bufChunk.length + 8).toString().padStart(8, '0')),
+      Buffer.from((bufChunk.length + 16).toString().padStart(8, '0')),
+      // Buffer.from((bufChunk.length).toString().padStart(8, '0')),
       await aesCrypt(bufChunk, key, iv, 'encrypt')
     )
   }
+  console.log('convertToEncryptedFile() - detailsBuf.length:', detailsBuf.length)
   console.log('convertToEncryptedFile() - detailsBuf:', detailsBuf.toString())
   console.log('convertToEncryptedFile() - encryptedArray:', encryptedArray.length)
   const finalName = `${await hashAndHex(
@@ -175,7 +178,7 @@ export async function convertToEncryptedFile(
  * @returns {Promise<File>} - Decrypted File.
  */
 export async function convertFromEncryptedFile(
-  source: Buffer, 
+  source: Buffer,
   key: CryptoKey,
   iv: Uint8Array
 ): Promise<File> {
@@ -185,6 +188,7 @@ export async function convertFromEncryptedFile(
   for (let i = 0; i < source.length; ) {
     const offset = i + 8
     console.log('convertFromEncryptedFile - offset:', offset)
+    console.log('convertFromEncryptedFile - raw segSize:', source.slice(i, offset).toString())
     const segSize = Number(source.slice(i, offset).toString())
     console.log('convertFromEncryptedFile - segSize:', segSize)
     const last = offset + segSize
