@@ -44,7 +44,7 @@ import {
   Files,
   QueryFindFileResponse,
   Strays
-} from 'jackal.nodejs-protos'
+} from '@jackallabs/jackal.nodejs-protos'
 import {
   buildPostFile,
   makePermsBlock,

@@ -1,10 +1,11 @@
 {
-  "name": "jackal.nodejs",
-  "version": "0.0.1",
+  "name": "@jackallabs/jackal.nodejs",
+  "version": "1.0.0",
   "description": "Javascript Node.js library for interacting with the Jackal Chain",
   "keywords": [
     "jackal",
-    "canine"
+    "canine",
+    "nodejs"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -52,7 +53,7 @@
     "@cosmjs/proto-signing": "^0.31.0",
     "@cosmjs/stargate": "^0.31.0",
     "eciesjs": "^0.4.2",
-    "jackal.nodejs-protos": "file:jackal.nodejs-protos-0.0.1.tgz"
+    "@jackallabs/jackal.nodejs-protos": "^1.0.0"
   },
   "devDependencies": {
     "@btmills/prettier": "^2.8.8",

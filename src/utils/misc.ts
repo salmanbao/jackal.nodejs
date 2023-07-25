@@ -1,5 +1,5 @@
 import { Blob } from 'node:buffer'
-import { PageResponse, QueryFileResponse } from 'jackal.nodejs-protos'
+import { PageResponse, QueryFileResponse } from '@jackallabs/jackal.nodejs-protos'
 import { IQueryHandler } from '@/interfaces/classes'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
 

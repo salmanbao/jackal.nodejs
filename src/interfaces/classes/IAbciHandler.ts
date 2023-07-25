@@ -16,7 +16,7 @@ import {
   ResponseOfferSnapshot,
   ResponseQuery,
   ResponseSetOption
-} from 'jackal.nodejs-protos'
+} from '@jackallabs/jackal.nodejs-protos'
 
 export interface IAbciHandler {
   getEcho(message: string): Promise<string>

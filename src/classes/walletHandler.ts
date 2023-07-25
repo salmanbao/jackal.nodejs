@@ -31,7 +31,7 @@ import {
   IWalletHandlerPublicProperties
 } from '@/interfaces'
 import { ProtoHandler } from '@/classes/protoHandler'
-import { Pubkey } from 'jackal.nodejs-protos'
+import { Pubkey } from '@jackallabs/jackal.nodejs-protos'
 import {
   AbciHandler,
   FileIo,

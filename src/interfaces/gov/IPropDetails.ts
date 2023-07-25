@@ -1,4 +1,4 @@
-import { ProposalStatus } from 'jackal.nodejs-protos'
+import { ProposalStatus } from '@jackallabs/jackal.nodejs-protos'
 import { ICoin } from '@/interfaces'
 
 export interface IPropDetails {

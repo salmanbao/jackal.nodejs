@@ -14,7 +14,7 @@ import {
   stringToAes
 } from '@/utils/crypt'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
-import { Files } from 'jackal.nodejs-protos'
+import { Files } from '@jackallabs/jackal.nodejs-protos'
 import { IProtoHandler, IWalletHandler } from '@/interfaces/classes'
 import { getFileTreeData } from '@/utils/misc'
 
