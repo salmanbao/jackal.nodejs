@@ -10,7 +10,8 @@ import {
   getRandomIndex,
   handlePagination,
   setDelay,
-  signerNotEnabled, standardizeFileSource,
+  signerNotEnabled,
+  standardizeFileSource,
   stripper
 } from '@/utils/misc'
 import { FileDownloadHandler } from '@/classes/fileDownloadHandler'
@@ -52,9 +53,10 @@ import {
 } from '@/utils/compression'
 import {
   IFileConfigRaw,
+  IFileMetaHashMap,
   IUploadList,
-  IUploadListItem,
-  IFileMetaHashMap } from '@/interfaces/file'
+  IUploadListItem
+} from '@/interfaces/file'
 
 export class FileIo implements IFileIo {
   private readonly walletRef: IWalletHandler
@@ -254,7 +256,11 @@ export class FileIo implements IFileIo {
         bundle.data = existing.cfg
         const prom = await this.tumbleUpload(
           jackalAddr,
-          existing.file || new File(await standardizeFileSource([uploadable]), handler.getWhoAmI())
+          existing.file
+            || new File(
+              await standardizeFileSource([uploadable]),
+              handler.getWhoAmI()
+            )
         ).catch((err: Error) => {
           console.warn('tumbleUpload() Failed')
           console.error(err)
@@ -358,13 +364,11 @@ export class FileIo implements IFileIo {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'downloadFolder'))
     const owner = this.walletRef.getJackalAddress()
-    const data = await readFileTreeEntry(
-      owner,
-      rawPath,
-      this.walletRef
-    ).catch((err: Error) => {
-      throw err
-    })
+    const data = await readFileTreeEntry(owner, rawPath, this.walletRef).catch(
+      (err: Error) => {
+        throw err
+      }
+    )
 
     if (Object.keys(data).length === 0) {
       console.warn('Folder recovery failed. Rebuilding ', rawPath)
@@ -439,7 +443,11 @@ export class FileIo implements IFileIo {
             this.walletRef,
             config.viewingAccess[requester]
           )
-          return await FileDownloadHandler.trackFile(Buffer.from(chunks), key, iv)
+          return await FileDownloadHandler.trackFile(
+            Buffer.from(chunks),
+            key,
+            iv
+          )
         } catch (err: any) {
           const attempt = i + 1
           const remaining = fileProviders.length - attempt
@@ -790,7 +798,11 @@ async function doUpload(
   file: File
 ): Promise<IProviderModifiedResponse> {
   const fileFormData = new FormData()
-  fileFormData.append('file', new globalThis.Blob([await file.arrayBuffer()]), file.name)
+  fileFormData.append(
+    'file',
+    new globalThis.Blob([await file.arrayBuffer()]),
+    file.name
+  )
   fileFormData.set('sender', sender)
   return await fetch(url, { method: 'POST', body: fileFormData as FormData })
     .then((resp): Promise<IProviderResponse> => {

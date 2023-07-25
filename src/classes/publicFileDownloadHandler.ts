@@ -15,9 +15,7 @@ export class PublicFileDownloadHandler implements IFileDownloadHandler {
    * @param {NodeJS Buffer} file - Raw file data direct from download source.
    * @returns {Promise<IFileDownloadHandler>} - PublicFileDownloadHandler instance.
    */
-  static async trackFile(
-    file: Buffer
-  ): Promise<IFileDownloadHandler> {
+  static async trackFile(file: Buffer): Promise<IFileDownloadHandler> {
     const decryptedFile: File = await convertFromPublicFile(file)
     return new PublicFileDownloadHandler(decryptedFile)
   }

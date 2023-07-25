@@ -8,8 +8,8 @@ import {
   IRnsBidHashMap,
   IRnsBidItem,
   IRnsExistsHashMap,
-  IRnsExpandedItem,
   IRnsExpandedForSaleHashMap,
+  IRnsExpandedItem,
   IRnsForSaleHashMap,
   IRnsForSaleItem,
   IRnsItem,
@@ -17,10 +17,7 @@ import {
   IRnsRecordItem,
   IRnsRegistrationItem
 } from '@/interfaces/rns'
-import {
-  IPaginatedMap,
-  IPagination
-} from '@/interfaces'
+import { IPaginatedMap, IPagination } from '@/interfaces'
 import {
   blockToDateFixed,
   handlePagination,

@@ -4,7 +4,10 @@ import { IFileDownloadHandler } from '@/interfaces/classes'
 import { PrivateFileDownloadHandler } from '@/classes/privateFileDownloadHandler'
 import { convertFromEncryptedFile } from '@/utils/crypt'
 
-export class FileDownloadHandler extends PrivateFileDownloadHandler implements IFileDownloadHandler {
+export class FileDownloadHandler
+  extends PrivateFileDownloadHandler
+  implements IFileDownloadHandler
+{
   protected constructor(file: File) {
     super(file)
   }

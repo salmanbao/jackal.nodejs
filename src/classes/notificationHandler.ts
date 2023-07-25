@@ -97,10 +97,12 @@ export class NotificationHandler implements INotificationHandler {
       )
     const msg = this.makeCounter()
     const pH = this.walletRef.getProtoHandler()
-    pH.debugBroadcaster([msg], { memo: '', step: false }).catch((err: Error) => {
-      console.warn(err)
-      throw err
-    })
+    pH.debugBroadcaster([msg], { memo: '', step: false }).catch(
+      (err: Error) => {
+        console.warn(err)
+        throw err
+      }
+    )
   }
 
   async getNotification(

@@ -6,9 +6,10 @@ import {
   IWalletHandlerPublicProperties
 } from '@/interfaces'
 import {
-  IAbciHandler, IMnemonicWallet,
+  IAbciHandler,
   IFileIo,
   IGovHandler,
+  IMnemonicWallet,
   INotificationHandler,
   IOracleHandler,
   IProtoHandler,
@@ -19,7 +20,10 @@ import {
 
 export interface IWalletHandler {
   traits: IWalletHandlerPublicProperties | null
-  convertToFullWallet(config: IWalletConfig, session: IMnemonicWallet): Promise<void>
+  convertToFullWallet(
+    config: IWalletConfig,
+    session: IMnemonicWallet
+  ): Promise<void>
   voidFullWallet(): void
 
   getRnsInitStatus(): boolean

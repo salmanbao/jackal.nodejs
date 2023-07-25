@@ -59,10 +59,7 @@ export class MnemonicWallet implements IMnemonicWallet {
    * @param {string} message - Value to use as signature base.
    * @returns {Promise<StdSignature>} - Resulting AminoSignResponse.signature.
    */
-  async signArbitrary(
-    address: string,
-    message: string
-  ): Promise<StdSignature> {
+  async signArbitrary(address: string, message: string): Promise<StdSignature> {
     const signed = await this.aminoWallet.signAmino(address, {
       chain_id: '',
       account_number: '0',

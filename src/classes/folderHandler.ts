@@ -1,12 +1,6 @@
 import { EncodeObject } from '@cosmjs/proto-signing'
-import {
-  IChildDirInfo,
-  IFolderFileFrame
-} from '@/interfaces'
-import {
-  IFileMeta,
-  IFileMetaHashMap
-} from '@/interfaces/file'
+import { IChildDirInfo, IFolderFileFrame } from '@/interfaces'
+import { IFileMeta, IFileMetaHashMap } from '@/interfaces/file'
 import { IFolderHandler, IWalletHandler } from '@/interfaces/classes'
 import { signerNotEnabled, stripper } from '@/utils/misc'
 import { merkleMeBro } from '@/utils/hash'

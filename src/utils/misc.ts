@@ -287,7 +287,7 @@ export async function getFileTreeData(
  * @param {Blob} source - Blob-likes to sanitize.
  * @returns {Promise<Blob>} - Sanitized Blob.
  */
-export async function standardizeBlob (source: Blob): Promise<Blob> {
+export async function standardizeBlob(source: Blob): Promise<Blob> {
   return new Blob([new Uint8Array(await source.arrayBuffer())])
 }
 
@@ -296,7 +296,9 @@ export async function standardizeBlob (source: Blob): Promise<Blob> {
  * @param {any[]} source - Mixed array of Blob-likes and ArrayBufferViews.
  * @returns {Promise<Uint8Array[]>} - Sanitized array of Uint8Arrays.
  */
-export async function standardizeFileSource (source: any[]): Promise<Uint8Array[]> {
+export async function standardizeFileSource(
+  source: any[]
+): Promise<Uint8Array[]> {
   const ret = []
   for (let blob of source) {
     ret.push(new Uint8Array(await blob.arrayBuffer()))

@@ -1,8 +1,18 @@
 import { randomUUID } from 'node:crypto'
 
-import { IEditorsViewers, IMsgPartialPostFileBundle, IPermsParts } from '@/interfaces'
+import {
+  IEditorsViewers,
+  IMsgPartialPostFileBundle,
+  IPermsParts
+} from '@/interfaces'
 import { EncodeObject } from '@cosmjs/proto-signing'
-import { aesToString, cryptString, genIv, genKey, stringToAes } from '@/utils/crypt'
+import {
+  aesToString,
+  cryptString,
+  genIv,
+  genKey,
+  stringToAes
+} from '@/utils/crypt'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
 import { Files } from 'jackal.nodejs-protos'
 import { IProtoHandler, IWalletHandler } from '@/interfaces/classes'
@@ -17,7 +27,7 @@ import { getFileTreeData } from '@/utils/misc'
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
  * @returns {Promise<EncodeObject>} - FileTree msg to save entry.
  */
-export async function saveFileTreeEntry (
+export async function saveFileTreeEntry(
   toAddress: string,
   rawPath: string,
   rawTarget: string,
@@ -58,11 +68,11 @@ export async function saveFileTreeEntry (
     usr: creator
   }
   msg.editors = JSON.stringify(
-    await makePermsBlock({base: 'e', ...me}, walletRef)
+    await makePermsBlock({ base: 'e', ...me }, walletRef)
   )
   if (toAddress === creator) {
     msg.viewers = JSON.stringify(
-      await makePermsBlock({base: 'v', ...me}, walletRef)
+      await makePermsBlock({ base: 'v', ...me }, walletRef)
     )
   } else {
     const destPubKey = await walletRef.findPubKey(toAddress)
@@ -72,8 +82,8 @@ export async function saveFileTreeEntry (
       usr: toAddress
     }
     msg.viewers = JSON.stringify({
-      ...(await makePermsBlock({base: 'v', ...me}, walletRef)),
-      ...(await makePermsBlock({base: 'v', ...them}, walletRef))
+      ...(await makePermsBlock({ base: 'v', ...me }, walletRef)),
+      ...(await makePermsBlock({ base: 'v', ...them }, walletRef))
     })
   }
   return buildPostFile(msg, walletRef.getProtoHandler())
@@ -86,7 +96,7 @@ export async function saveFileTreeEntry (
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
  * @returns {Promise<{[p: string]: any}>} - Stored data object.
  */
-export async function readFileTreeEntry (
+export async function readFileTreeEntry(
   owner: string,
   rawPath: string,
   walletRef: IWalletHandler
@@ -101,7 +111,7 @@ export async function readFileTreeEntry (
     return {}
   } else {
     try {
-      const {contents, viewingAccess, trackingNumber} = result.value
+      const { contents, viewingAccess, trackingNumber } = result.value
         .files as Files
       const parsedVA = JSON.parse(viewingAccess)
       const viewName = await hashAndHex(
@@ -130,7 +140,7 @@ export async function readFileTreeEntry (
  * @param {IWalletHandler} walletRef
  * @returns {Promise<EncodeObject>}
  */
-export async function removeFileTreeEntry (
+export async function removeFileTreeEntry(
   rawPath: string,
   walletRef: IWalletHandler
 ): Promise<EncodeObject> {
@@ -149,7 +159,7 @@ export async function removeFileTreeEntry (
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
  * @returns {Promise<IEditorsViewers>} - Completed permissions block.
  */
-export async function makePermsBlock (
+export async function makePermsBlock(
   parts: IPermsParts,
   walletRef: IWalletHandler
 ): Promise<IEditorsViewers> {
@@ -165,7 +175,7 @@ export async function makePermsBlock (
  * @param {IProtoHandler} pH - ProtoHandler instance for accessing msgPostFile function.
  * @returns {Promise<EncodeObject>} - Encoded msgPostFile in correct order.
  */
-export async function buildPostFile (
+export async function buildPostFile(
   data: IMsgPartialPostFileBundle,
   pH: IProtoHandler
 ): Promise<EncodeObject> {

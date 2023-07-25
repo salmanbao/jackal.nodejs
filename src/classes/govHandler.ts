@@ -14,9 +14,7 @@ import {
   IStakingValidatorMap,
   IStakingValidatorStakedMap
 } from '@/interfaces/gov'
-import {
-  ICoin
-} from '@/interfaces'
+import { ICoin } from '@/interfaces'
 import { TValidatorStatus } from '@/types/TValidatorStatus'
 import { EncodeObject } from '@cosmjs/proto-signing'
 import { TPropStatus } from '@/types/TPropStatus'

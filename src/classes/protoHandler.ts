@@ -20,10 +20,7 @@ import { DeliverTxResponse } from '@cosmjs/stargate'
 import { IProtoConfig } from '@/interfaces'
 import { QueryHandler } from '@/classes/queryHandler'
 
-export class ProtoHandler
-  extends QueryHandler
-  implements IProtoHandler
-{
+export class ProtoHandler extends QueryHandler implements IProtoHandler {
   private readonly masterBroadcaster: TMasterBroadcaster
   private readonly allTxClients: IAllTx
 

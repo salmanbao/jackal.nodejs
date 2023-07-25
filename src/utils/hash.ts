@@ -1,4 +1,4 @@
-import {webcrypto} from 'node:crypto'
+import { webcrypto } from 'node:crypto'
 
 /**
  * Hash input using SHA-256, then convert to hex string.
@@ -8,7 +8,10 @@ import {webcrypto} from 'node:crypto'
  */
 export async function hashAndHex(input: string): Promise<string> {
   const algo = 'SHA-256'
-  const raw = await webcrypto.subtle.digest(algo, new TextEncoder().encode(input))
+  const raw = await webcrypto.subtle.digest(
+    algo,
+    new TextEncoder().encode(input)
+  )
   return bufferToHex(new Uint8Array(raw))
 }
 

@@ -11,9 +11,10 @@ import {
   jackalMainnetChainId
 } from '@/utils/globals'
 import {
-  IAbciHandler, IMnemonicWallet,
+  IAbciHandler,
   IFileIo,
   IGovHandler,
+  IMnemonicWallet,
   INotificationHandler,
   IOracleHandler,
   IProtoHandler,
@@ -24,7 +25,7 @@ import {
 } from '@/interfaces/classes'
 import { bufferToHex, hashAndHex, hexFullPath, merkleMeBro } from '@/utils/hash'
 import {
-  ICoin /** TODO */,
+  ICoin,
   IWalletConfig,
   IWalletHandlerPrivateProperties,
   IWalletHandlerPublicProperties
@@ -288,7 +289,10 @@ export class WalletHandler implements IWalletHandler {
   asymmetricDecrypt(toDecrypt: string): Buffer {
     if (!this.properties)
       throw new Error(signerNotEnabled('WalletHandler', 'asymmetricDecrypt'))
-    return decrypt(this.properties.keyPair.toHex(), Buffer.from(toDecrypt, 'hex'))
+    return decrypt(
+      this.properties.keyPair.toHex(),
+      Buffer.from(toDecrypt, 'hex')
+    )
   }
 
   /**
@@ -393,15 +397,8 @@ async function makeSecret(
  * @param {IMnemonicWallet} session - CustomWallet instance.
  * @returns {Promise<{traits: IWalletHandlerPublicProperties, properties: IWalletHandlerPrivateProperties}>}
  */
-async function processWallet(
-  config: IWalletConfig,
-  session: IMnemonicWallet
-) {
-  const {
-    signerChain,
-    queryAddr,
-    txAddr
-  } = config
+async function processWallet(config: IWalletConfig, session: IMnemonicWallet) {
+  const { signerChain, queryAddr, txAddr } = config
   const chainId = signerChain || jackalMainnetChainId
   const signer = await session.getOfflineSignerAuto()
   const queryUrl = (queryAddr || defaultQueryAddr9091).replace(/\/+$/, '')
@@ -416,12 +413,11 @@ async function processWallet(
     value: { pubkey },
     success
   } = await pH.fileTreeQuery.queryPubkey({ address: jackalAccount.address })
-  const secret = await makeSecret(
-    jackalAccount.address,
-    session
-  ).catch((err: Error) => {
-    throw err
-  })
+  const secret = await makeSecret(jackalAccount.address, session).catch(
+    (err: Error) => {
+      throw err
+    }
+  )
   const fileTreeInitComplete = success && !!pubkey?.key
   const secretAsHex = bufferToHex(Buffer.from(secret, 'base64').subarray(0, 32))
   const keyPair = PrivateKey.fromHex(secretAsHex)

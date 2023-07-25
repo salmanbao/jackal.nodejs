@@ -1,8 +1,5 @@
 import { EncodeObject } from '@cosmjs/proto-signing'
-import {
-  IPaginatedMap,
-  IPagination
-} from '@/interfaces'
+import { IPaginatedMap, IPagination } from '@/interfaces'
 import {
   IRnsBidHashMap,
   IRnsBidItem,

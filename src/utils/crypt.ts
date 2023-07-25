@@ -121,7 +121,9 @@ export async function stringToAes(
   const parts = source.split('|')
   return {
     iv: new Uint8Array(wallet.asymmetricDecrypt(parts[0])),
-    key: await importJackalKey(new Uint8Array(wallet.asymmetricDecrypt(parts[1])))
+    key: await importJackalKey(
+      new Uint8Array(wallet.asymmetricDecrypt(parts[1]))
+    )
   }
 }
 
@@ -130,23 +132,23 @@ export async function stringToAes(
  * @param {File} workingFile - Source File.
  * @returns {Promise<File>} - Public-mode File.
  */
-export async function convertToPublicFile(
-  workingFile: File
-): Promise<File> {
+export async function convertToPublicFile(workingFile: File): Promise<File> {
   const chunkSize = 32 * Math.pow(1024, 2) /** in bytes */
   const details = {
-      name: workingFile.name,
-      lastModified: workingFile.lastModified,
-      type: workingFile.type,
-      size: workingFile.size
-    }
+    name: workingFile.name,
+    lastModified: workingFile.lastModified,
+    type: workingFile.type,
+    size: workingFile.size
+  }
   const detailsBuf = Buffer.from(JSON.stringify(details))
   const encryptedArray: Buffer[] = [
     Buffer.from((detailsBuf.length + 16).toString().padStart(8, '0')),
     detailsBuf
   ]
   for (let i = 0; i < workingFile.size; i += chunkSize) {
-    const bufChunk = Buffer.from(await workingFile.slice(i, i + chunkSize).arrayBuffer())
+    const bufChunk = Buffer.from(
+      await workingFile.slice(i, i + chunkSize).arrayBuffer()
+    )
     encryptedArray.push(
       Buffer.from((bufChunk.length + 16).toString().padStart(8, '0')),
       bufChunk
@@ -155,7 +157,9 @@ export async function convertToPublicFile(
   const finalName = `${await hashAndHex(
     details.name + Date.now().toString()
   )}.jkl`
-  const abArray = encryptedArray.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  const abArray = encryptedArray.map((el) =>
+    el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength)
+  )
   return new File(abArray, finalName, { type: 'text/plain' })
 }
 
@@ -164,9 +168,7 @@ export async function convertToPublicFile(
  * @param {Buffer} source - Source raw Blob.
  * @returns {Promise<File>} - Decrypted File.
  */
-export async function convertFromPublicFile(
-  source: Buffer
-): Promise<File> {
+export async function convertFromPublicFile(source: Buffer): Promise<File> {
   let detailsBuf = Buffer.from('')
   const bufParts: Buffer[] = []
   for (let i = 0; i < source.length; ) {
@@ -182,7 +184,9 @@ export async function convertFromPublicFile(
     i = last
   }
   const details = JSON.parse(detailsBuf.toString())
-  const abArray = bufParts.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  const abArray = bufParts.map((el) =>
+    el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength)
+  )
   return new File(abArray, details.name, details)
 }
 
@@ -200,11 +204,11 @@ export async function convertToEncryptedFile(
 ): Promise<File> {
   const chunkSize = 32 * Math.pow(1024, 2) /** in bytes */
   const details = {
-      name: workingFile.name,
-      lastModified: workingFile.lastModified,
-      type: workingFile.type,
-      size: workingFile.size
-    }
+    name: workingFile.name,
+    lastModified: workingFile.lastModified,
+    type: workingFile.type,
+    size: workingFile.size
+  }
   const detailsBuf = Buffer.from(JSON.stringify(details))
   const encryptedArray: Buffer[] = [
     Buffer.from((detailsBuf.length + 16).toString().padStart(8, '0')),
@@ -212,7 +216,9 @@ export async function convertToEncryptedFile(
     await aesCrypt(detailsBuf, key, iv, 'encrypt')
   ]
   for (let i = 0; i < workingFile.size; i += chunkSize) {
-    const bufChunk = Buffer.from(await workingFile.slice(i, i + chunkSize).arrayBuffer())
+    const bufChunk = Buffer.from(
+      await workingFile.slice(i, i + chunkSize).arrayBuffer()
+    )
     encryptedArray.push(
       Buffer.from((bufChunk.length + 16).toString().padStart(8, '0')),
       // Buffer.from((bufChunk.length).toString().padStart(8, '0')),
@@ -222,7 +228,9 @@ export async function convertToEncryptedFile(
   const finalName = `${await hashAndHex(
     details.name + Date.now().toString()
   )}.jkl`
-  const abArray = encryptedArray.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  const abArray = encryptedArray.map((el) =>
+    el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength)
+  )
   return new File(abArray, finalName, { type: 'text/plain' })
 }
 
@@ -254,7 +262,9 @@ export async function convertFromEncryptedFile(
     i = last
   }
   const details = JSON.parse(detailsBuf.toString())
-  const abArray = bufParts.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  const abArray = bufParts.map((el) =>
+    el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength)
+  )
   return new File(abArray, details.name, details)
 }
 
@@ -281,4 +291,4 @@ export async function cryptString(
   } else {
     throw new Error('cryptString() - Invalid Mode!')
   }
- }
+}
