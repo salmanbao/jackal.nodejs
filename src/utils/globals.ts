@@ -6,4 +6,3 @@ export const keyAlgo: AesKeyGenParams = {
   name: 'AES-GCM',
   length: 256
 }
-// export const keyAlgo = 'id-aes256-GCM'

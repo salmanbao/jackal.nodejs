@@ -7,10 +7,9 @@ import {
   DirectSecp256k1HdWallet,
   OfflineDirectSigner
 } from '@cosmjs/proto-signing'
-import { IChainConfig } from '@/interfaces'
-import { ICustomWallet } from '@/interfaces/classes'
+import { IMnemonicWallet } from '@/interfaces/classes'
 
-export class CustomWallet implements ICustomWallet {
+export class MnemonicWallet implements IMnemonicWallet {
   private directWallet: OfflineDirectSigner
   private aminoWallet: OfflineAminoSigner
 
@@ -31,7 +30,7 @@ export class CustomWallet implements ICustomWallet {
   /**
    * Async wrapper to create a CustomWallet instance.
    * @param {string} mnemonic - Seed phrase to use to generate the wallet sessions.
-   * @returns {Promise<CustomWallet>} - Instance of CustomWallet.
+   * @returns {Promise<MnemonicWallet>} - Instance of CustomWallet.
    */
   static async create(mnemonic: string) {
     let directWallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
@@ -43,45 +42,24 @@ export class CustomWallet implements ICustomWallet {
     /* Destroy mnemonic */
     mnemonic = ''
 
-    return new CustomWallet(directWallet, aminoWallet)
-  }
-
-  /**
-   * Placeholder for WalletHandler compatibility.
-   * @param {string | string[]} _ - Not Used, typed for compatibility.
-   * @returns {Promise<void>}
-   */
-  async enable(_: string | string[]): Promise<void> {
-    /* Nothing to do */
-  }
-
-  /**
-   * Placeholder for WalletHandler compatibility.
-   * @param {string | string[]} _ - Not Used, typed for compatibility.
-   * @returns {Promise<void>}
-   */
-  async experimentalSuggestChain(_: IChainConfig): Promise<void> {
-    /* Nothing to do */
+    return new MnemonicWallet(directWallet, aminoWallet)
   }
 
   /**
    * Expose DirectSigner for use in WalletHandler.
-   * @param {string} _ - Not Used, typed for compatibility.
    * @returns {Promise<OfflineDirectSigner>}
    */
-  async getOfflineSignerAuto(_: string): Promise<OfflineDirectSigner> {
+  async getOfflineSignerAuto(): Promise<OfflineDirectSigner> {
     return this.directWallet
   }
 
   /**
    * Generate signature used by WalletHandler to create session secret.
-   * @param _ - Not Used, typed for compatibility.
    * @param {string} address - Jkl address to use for signature.
    * @param {string} message - Value to use as signature base.
    * @returns {Promise<StdSignature>} - Resulting AminoSignResponse.signature.
    */
   async signArbitrary(
-    _: any,
     address: string,
     message: string
   ): Promise<StdSignature> {

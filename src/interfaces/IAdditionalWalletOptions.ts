@@ -1,5 +1,5 @@
-import { ICustomWallet } from '@/interfaces/classes'
+import { IMnemonicWallet } from '@/interfaces/classes'
 
 export interface IAdditionalWalletOptions {
-  customWallet: ICustomWallet
+  customWallet: IMnemonicWallet
 }

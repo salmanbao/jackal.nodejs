@@ -83,7 +83,6 @@ export class FileIo implements IFileIo {
       wallet.traits.chainId,
       versionFilter
     )
-    // const provider = providers[await random(providers.length)]
     const provider = providers[getRandomIndex(providers.length)]
     return new FileIo(wallet, providers, provider)
   }
@@ -301,17 +300,6 @@ export class FileIo implements IFileIo {
       }
     } while (Object.keys(queueHashMap).length > 0)
   }
-  // private async afterUpload(ids: IQueueItemPostUpload[]): Promise<void> {
-  //   if (!this.walletRef.traits) throw new Error(signerNotEnabled('FileIo', 'afterUpload'))
-  //   const pH = this.walletRef.getProtoHandler()
-  //   const readyToBroadcast = await this.rawAfterUpload(ids)
-  //   const memo = ``
-  //   await pH
-  //     .debugBroadcaster(readyToBroadcast, { memo, step: false })
-  //     .catch((err) => {
-  //       throw err
-  //     })
-  // }
   private async rawAfterUpload(
     ids: IQueueItemPostUpload[]
   ): Promise<EncodeObject[]> {
@@ -447,8 +435,6 @@ export class FileIo implements IFileIo {
             completion.track =
               Math.floor((receivedLength / Number(contentLength)) * 100) || 1
           }
-          // Buffer.from(chunks)
-          // const rawFile = new Blob(chunks)
           const { key, iv } = await stringToAes(
             this.walletRef,
             config.viewingAccess[requester]
@@ -825,8 +811,6 @@ async function getProviders(
   max?: number
 ): Promise<IMiner[]> {
   const rawProviderList = await fetchProviders(qH)
-  // console.info('Raw Providers')
-  // console.dir(rawProviderList)
   return filterProviders(rawProviderList, max)
 }
 async function fetchProviders(qH: IQueryHandler): Promise<IMiner[]> {
@@ -889,13 +873,6 @@ async function verifyProviders(
           return res.ok && chainCheck && verCheck
         })
         .catch((_: Error) => {
-          // console.warn('verifyProviders() Error')
-          // console.error(err)
-          // if (err.message.includes('AbortSignal')) {
-          //   alert(
-          //     'AbortSignal.timeout() error! Chromium family version 103+ required!'
-          //   )
-          // }
           return false
         })
       return result

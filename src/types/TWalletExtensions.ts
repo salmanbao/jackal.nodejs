@@ -1,3 +1,3 @@
-import { ICustomWallet } from '@/interfaces/classes'
+import { IMnemonicWallet } from '@/interfaces/classes'
 
-export type TWalletExtensions = ICustomWallet
+export type TWalletExtensions = IMnemonicWallet

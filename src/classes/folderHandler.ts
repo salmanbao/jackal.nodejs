@@ -1,4 +1,3 @@
-
 import { EncodeObject } from '@cosmjs/proto-signing'
 import {
   IChildDirInfo,

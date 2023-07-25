@@ -9,7 +9,7 @@ import { IProtoHandler, IWalletHandler } from '@/interfaces/classes'
 import { getFileTreeData } from '@/utils/misc'
 
 /**
- * Save encrypted data to FileTree path with optional compression.
+ * Save encrypted data to FileTree path.
  * @param {string} toAddress - Jkl address of owner.
  * @param {string} rawPath - Parent path to store to.
  * @param {string} rawTarget - Specific entry to store to.
@@ -80,11 +80,10 @@ export async function saveFileTreeEntry (
 }
 
 /**
- * Read encrypted data from FileTree path with optional decompression.
+ * Read encrypted data from FileTree path.
  * @param {string} owner - Jkl address of owner.
  * @param {string} rawPath - Path to stored data.
  * @param {IWalletHandler} walletRef - Wallet instance for accessing functions.
- * @param {boolean} decompress - Optional boolean to flag if retrieved data should be decompressed.
  * @returns {Promise<{[p: string]: any}>} - Stored data object.
  */
 export async function readFileTreeEntry (
@@ -126,7 +125,7 @@ export async function readFileTreeEntry (
 }
 
 /**
- *
+ * Remove FileTree entry from target path.
  * @param {string} rawPath - Path to FileTree entry to remove.
  * @param {IWalletHandler} walletRef
  * @returns {Promise<EncodeObject>}

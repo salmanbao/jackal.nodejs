@@ -1,7 +1,6 @@
 import { Buffer } from 'node:buffer'
 import {
   AccountData,
-  EncodeObject,
   isOfflineDirectSigner,
   OfflineSigner
 } from '@cosmjs/proto-signing'
@@ -12,7 +11,7 @@ import {
   jackalMainnetChainId
 } from '@/utils/globals'
 import {
-  IAbciHandler,
+  IAbciHandler, IMnemonicWallet,
   IFileIo,
   IGovHandler,
   INotificationHandler,
@@ -25,9 +24,7 @@ import {
 } from '@/interfaces/classes'
 import { bufferToHex, hashAndHex, hexFullPath, merkleMeBro } from '@/utils/hash'
 import {
-  IAdditionalWalletOptions,
   ICoin /** TODO */,
-  // IEnabledSecrets,
   IWalletConfig,
   IWalletHandlerPrivateProperties,
   IWalletHandlerPublicProperties
@@ -36,7 +33,6 @@ import { ProtoHandler } from '@/classes/protoHandler'
 import { Pubkey } from 'jackal.nodejs-protos'
 import {
   AbciHandler,
-  deprecated,
   FileIo,
   GovHandler,
   NotificationHandler,
@@ -47,8 +43,6 @@ import {
 import { QueryHandler } from '@/classes/queryHandler'
 import { signerNotEnabled } from '@/utils/misc'
 import { TWalletExtensions } from '@/types/TWalletExtensions'
-
-const defaultChains = [jackalMainnetChainId, 'osmo-1', 'cosmoshub-4']
 
 export class WalletHandler implements IWalletHandler {
   private readonly qH: IQueryHandler
@@ -75,27 +69,20 @@ export class WalletHandler implements IWalletHandler {
   /**
    * Creates full WalletHandler vs query-only from trackQueryWallet().
    * @param {IWalletConfig} config - Config items needed to create a signing WalletHandler.
-   * @param {IAdditionalWalletOptions} options - Additional options. Currently only supports customWallet.
+   * @param {IMnemonicWallet} session - IMnemonicWallet instance.
    * @returns {Promise<IWalletHandler>} - Signing WalletHandler.
    */
   static async trackWallet(
     config: IWalletConfig,
-    options?: IAdditionalWalletOptions
+    session: IMnemonicWallet
   ): Promise<IWalletHandler> {
-    // if (!window) {
-    //   throw new Error(
-    //     'Jackal.nodejs is only supported in the browser at this time!'
-    //   )
-    // } else {
-      const qH = await QueryHandler.trackQuery(config.queryAddr)
-      const { properties, traits } = await processWallet(config, options).catch(
-        (err: Error) => {
-          throw err
-        }
-      )
-
-      return new WalletHandler(qH, properties, traits)
-    // }
+    const qH = await QueryHandler.trackQuery(config.queryAddr)
+    const { properties, traits } = await processWallet(config, session).catch(
+      (err: Error) => {
+        throw err
+      }
+    )
+    return new WalletHandler(qH, properties, traits)
   }
 
   /**
@@ -104,14 +91,8 @@ export class WalletHandler implements IWalletHandler {
    * @returns {Promise<IWalletHandler>} - Query-only WalletHandler.
    */
   static async trackQueryWallet(queryUrl?: string): Promise<IWalletHandler> {
-    // if (!window) {
-    //   throw new Error(
-    //     'Jackal.nodejs is only supported in the browser at this time!'
-    //   )
-    // } else {
-      const qH = await QueryHandler.trackQuery(queryUrl)
-      return new WalletHandler(qH, null, null)
-    // }
+    const qH = await QueryHandler.trackQuery(queryUrl)
+    return new WalletHandler(qH, null, null)
   }
 
   /**
@@ -125,35 +106,16 @@ export class WalletHandler implements IWalletHandler {
   }
 
   /**
-   * @deprecated
-   */
-  static async initAccount(
-    wallet: IWalletHandler,
-    filetreeTxClient: any
-  ): Promise<EncodeObject> {
-    deprecated('WalletHandler.initAccount()', 'v2.0.0', {
-      aggressive: true,
-      replacement: 'StorageHandler.makeStorageInitMsg()'
-    })
-    const { msgInitAll } = await filetreeTxClient
-    const initCall = msgInitAll({
-      creator: wallet.getJackalAddress(),
-      pubkey: wallet.getPubkey()
-    })
-    return initCall
-  }
-
-  /**
    * Converts query-only WalletHandler instance to signing instance.
    * @param {IWalletConfig} config - Requires same object as trackWallet().
-   * @param {IAdditionalWalletOptions} options - Additional options. Currently only supports customWallet.
+   * @param {IMnemonicWallet} session - IMnemonicWallet instance.
    * @returns {Promise<void>}
    */
   async convertToFullWallet(
     config: IWalletConfig,
-    options?: IAdditionalWalletOptions
+    session: IMnemonicWallet
   ): Promise<void> {
-    const { properties, traits } = await processWallet(config, options).catch(
+    const { properties, traits } = await processWallet(config, session).catch(
       (err: Error) => {
         throw err
       }
@@ -408,19 +370,17 @@ export class WalletHandler implements IWalletHandler {
 
 /**
  * Generate a mnemonic-specific signature to use as a seed for creating an asymmetric keypair.
- * @param {string} chainId - Chain ID determine sinature base.
  * @param {string} acct - The wallet address matching the chainId.
- * @param {Keplr | Leap} walletExtension - Browser wallet extension to use for signArbitrary() call.
+ * @param {IMnemonicWallet} walletExtension - Custom wallet session to use for signArbitrary() call.
  * @returns {Promise<string>} - Generated signature.
  */
 async function makeSecret(
-  chainId: string,
   acct: string,
   walletExtension: TWalletExtensions
 ): Promise<string> {
   const memo = 'Initiate Jackal Session'
   const signed = await walletExtension
-    .signArbitrary(chainId, acct, memo)
+    .signArbitrary(acct, memo)
     .catch((err: Error) => {
       throw err
     })
@@ -430,51 +390,20 @@ async function makeSecret(
 /**
  * Create the traits and properties used by a signing WalletHandler.
  * @param {IWalletConfig} config - Config items needed to create a signing WalletHandler.
- * @param {IAdditionalWalletOptions} options - Additional options. Currently only supports customWallet.
+ * @param {IMnemonicWallet} session - CustomWallet instance.
  * @returns {Promise<{traits: IWalletHandlerPublicProperties, properties: IWalletHandlerPrivateProperties}>}
  */
 async function processWallet(
   config: IWalletConfig,
-  options?: IAdditionalWalletOptions
+  session: IMnemonicWallet
 ) {
   const {
-    selectedWallet,
     signerChain,
-    enabledChains,
     queryAddr,
-    txAddr,
-    chainConfig
+    txAddr
   } = config
   const chainId = signerChain || jackalMainnetChainId
-  if (!options?.customWallet) throw new Error()
-  let windowWallet: TWalletExtensions = options.customWallet
-  // switch (selectedWallet) {
-  //   case 'keplr':
-  //     if (!window.keplr) {
-  //       throw new Error('Keplr Wallet selected but unavailable')
-  //     }
-  //     windowWallet = window.keplr
-  //     break
-  //   case 'leap':
-  //     if (!window.leap) {
-  //       throw new Error('Leap Wallet selected but unavailable')
-  //     }
-  //     windowWallet = window.leap
-  //     break
-  //   case 'custom':
-  //     if (!options?.customWallet) {
-  //       throw new Error('Custom Wallet selected but unavailable')
-  //     }
-  //     windowWallet = options.customWallet
-  //     break
-  //   default:
-  //     throw new Error('A valid wallet selection must be provided')
-  // }
-  await windowWallet.experimentalSuggestChain(chainConfig)
-  await windowWallet.enable(enabledChains || defaultChains).catch((err: Error) => {
-    throw err
-  })
-  const signer = await windowWallet.getOfflineSignerAuto(chainId)
+  const signer = await session.getOfflineSignerAuto()
   const queryUrl = (queryAddr || defaultQueryAddr9091).replace(/\/+$/, '')
   const rpcUrl = (txAddr || defaultTxAddr26657).replace(/\/+$/, '')
   const jackalAccount = (await signer.getAccounts())[0]
@@ -488,18 +417,15 @@ async function processWallet(
     success
   } = await pH.fileTreeQuery.queryPubkey({ address: jackalAccount.address })
   const secret = await makeSecret(
-    chainId,
     jackalAccount.address,
-    windowWallet
+    session
   ).catch((err: Error) => {
     throw err
   })
-  console.log('secret', secret)
   const fileTreeInitComplete = success && !!pubkey?.key
   const secretAsHex = bufferToHex(Buffer.from(secret, 'base64').subarray(0, 32))
   const keyPair = PrivateKey.fromHex(secretAsHex)
   const isDirect = isOfflineDirectSigner(signer)
-
   const properties: IWalletHandlerPrivateProperties = {
     signer,
     keyPair,
@@ -510,9 +436,7 @@ async function processWallet(
   }
   const traits: IWalletHandlerPublicProperties = {
     chainId,
-    isDirect,
-    walletProvider: selectedWallet
+    isDirect
   }
-
   return { properties, traits }
 }

@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { AccountData, OfflineSigner } from '@cosmjs/proto-signing'
 import {
   ICoin,
@@ -5,7 +6,7 @@ import {
   IWalletHandlerPublicProperties
 } from '@/interfaces'
 import {
-  IAbciHandler,
+  IAbciHandler, IMnemonicWallet,
   IFileIo,
   IGovHandler,
   INotificationHandler,
@@ -18,7 +19,7 @@ import {
 
 export interface IWalletHandler {
   traits: IWalletHandlerPublicProperties | null
-  convertToFullWallet(config: IWalletConfig): Promise<void>
+  convertToFullWallet(config: IWalletConfig, session: IMnemonicWallet): Promise<void>
   voidFullWallet(): void
 
   getRnsInitStatus(): boolean
@@ -34,8 +35,8 @@ export interface IWalletHandler {
   getAllBalances(): Promise<ICoin[]>
   getJackalBalance(): Promise<ICoin>
   getPubkey(): string
-  asymmetricEncrypt(toEncrypt: Uint8Array, pubKey: string): string
-  asymmetricDecrypt(toDecrypt: string): Uint8Array
+  asymmetricEncrypt(toEncrypt: Buffer, pubKey: string): string
+  asymmetricDecrypt(toDecrypt: string): Buffer
   findPubKey(address: string): Promise<string>
 
   /**

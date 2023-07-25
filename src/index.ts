@@ -1,6 +1,6 @@
 /** Classes */
 export * from '@/classes/abciHandler'
-export * from '@/classes/customWallet'
+export * from '@/classes/mnemonicWallet'
 export * from '@/classes/fileDownloadHandler'
 export * from '@/classes/fileUploadHandler'
 export * from '@/classes/fileIo'

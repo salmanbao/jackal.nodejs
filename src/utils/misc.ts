@@ -1,7 +1,7 @@
+import { Blob } from 'node:buffer'
 import { PageResponse, QueryFileResponse } from 'jackal.nodejs-protos'
 import { IQueryHandler } from '@/interfaces/classes'
 import { hashAndHex, merkleMeBro } from '@/utils/hash'
-import { Blob } from 'node:buffer'
 
 /**
  * Notify that function is deprecated and should no longer be used.
@@ -282,9 +282,20 @@ export async function getFileTreeData(
   })
 }
 
-export async function standardizeBlob (source: any): Promise<Blob> {
+/**
+ * Forces Blob-likes to proper Blob.
+ * @param {Blob} source - Blob-likes to sanitize.
+ * @returns {Promise<Blob>} - Sanitized Blob.
+ */
+export async function standardizeBlob (source: Blob): Promise<Blob> {
   return new Blob([new Uint8Array(await source.arrayBuffer())])
 }
+
+/**
+ * Forces array of Blob-likes and ArrayBufferViews to array of Uint8Arrays.
+ * @param {any[]} source - Mixed array of Blob-likes and ArrayBufferViews.
+ * @returns {Promise<Uint8Array[]>} - Sanitized array of Uint8Arrays.
+ */
 export async function standardizeFileSource (source: any[]): Promise<Uint8Array[]> {
   const ret = []
   for (let blob of source) {

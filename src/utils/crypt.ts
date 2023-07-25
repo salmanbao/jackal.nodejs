@@ -42,16 +42,15 @@ export async function genKey(): Promise<CryptoKey> {
  */
 export function genIv(): Uint8Array {
   return getRandomValues(new Uint8Array(16))
-  // return randomBytes(16)
 }
 
 /**
- * Encrypt or decrypt a Blob using AES-256 (AES-GCM).
- * @param {Blob} data - Source to encrypt or decrypt.
+ * Encrypt or decrypt a NodeJs Buffer using AES-256 (AES-GCM).
+ * @param {Buffer} data - Source to encrypt or decrypt.
  * @param {CryptoKey} key - Key to use. Decryption key must match encryption key that was used.
  * @param {Uint8Array} iv - Iv to use. Decryption iv must match encryption iv that was used.
  * @param {"encrypt" | "decrypt"} mode - Toggle between encryption and decryption.
- * @returns {Promise<Blob>} - Processed result.
+ * @returns {Promise<Buffer>} - Processed result.
  */
 export async function aesCrypt(
   data: Buffer,
@@ -100,9 +99,9 @@ export async function aesToString(
   pubKey: string,
   aes: IAesBundle
 ): Promise<string> {
-  const theIv = wallet.asymmetricEncrypt(aes.iv, pubKey)
+  const theIv = wallet.asymmetricEncrypt(Buffer.from(aes.iv), pubKey)
   const key = await exportJackalKey(aes.key)
-  const theKey = wallet.asymmetricEncrypt(key, pubKey)
+  const theKey = wallet.asymmetricEncrypt(Buffer.from(key), pubKey)
   return `${theIv}|${theKey}`
 }
 
@@ -121,9 +120,70 @@ export async function stringToAes(
   }
   const parts = source.split('|')
   return {
-    iv: wallet.asymmetricDecrypt(parts[0]),
-    key: await importJackalKey(wallet.asymmetricDecrypt(parts[1]))
+    iv: new Uint8Array(wallet.asymmetricDecrypt(parts[0])),
+    key: await importJackalKey(new Uint8Array(wallet.asymmetricDecrypt(parts[1])))
   }
+}
+
+/**
+ * Converts raw File to Public-mode File.
+ * @param {File} workingFile - Source File.
+ * @returns {Promise<File>} - Public-mode File.
+ */
+export async function convertToPublicFile(
+  workingFile: File
+): Promise<File> {
+  const chunkSize = 32 * Math.pow(1024, 2) /** in bytes */
+  const details = {
+      name: workingFile.name,
+      lastModified: workingFile.lastModified,
+      type: workingFile.type,
+      size: workingFile.size
+    }
+  const detailsBuf = Buffer.from(JSON.stringify(details))
+  const encryptedArray: Buffer[] = [
+    Buffer.from((detailsBuf.length + 16).toString().padStart(8, '0')),
+    detailsBuf
+  ]
+  for (let i = 0; i < workingFile.size; i += chunkSize) {
+    const bufChunk = Buffer.from(await workingFile.slice(i, i + chunkSize).arrayBuffer())
+    encryptedArray.push(
+      Buffer.from((bufChunk.length + 16).toString().padStart(8, '0')),
+      bufChunk
+    )
+  }
+  const finalName = `${await hashAndHex(
+    details.name + Date.now().toString()
+  )}.jkl`
+  const abArray = encryptedArray.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  return new File(abArray, finalName, { type: 'text/plain' })
+}
+
+/**
+ * Converts raw Public-mode NodeJS Buffer to File.
+ * @param {Buffer} source - Source raw Blob.
+ * @returns {Promise<File>} - Decrypted File.
+ */
+export async function convertFromPublicFile(
+  source: Buffer
+): Promise<File> {
+  let detailsBuf = Buffer.from('')
+  const bufParts: Buffer[] = []
+  for (let i = 0; i < source.length; ) {
+    const offset = i + 8
+    const segSize = Number(source.slice(i, offset).toString())
+    const last = offset + segSize
+    const segment = source.slice(offset, last)
+    if (i === 0) {
+      detailsBuf = segment
+    } else {
+      bufParts.push(segment)
+    }
+    i = last
+  }
+  const details = JSON.parse(detailsBuf.toString())
+  const abArray = bufParts.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
+  return new File(abArray, details.name, details)
 }
 
 /**
@@ -138,7 +198,6 @@ export async function convertToEncryptedFile(
   key: CryptoKey,
   iv: Uint8Array
 ): Promise<File> {
-
   const chunkSize = 32 * Math.pow(1024, 2) /** in bytes */
   const details = {
       name: workingFile.name,
@@ -160,9 +219,6 @@ export async function convertToEncryptedFile(
       await aesCrypt(bufChunk, key, iv, 'encrypt')
     )
   }
-  console.log('convertToEncryptedFile() - detailsBuf.length:', detailsBuf.length)
-  console.log('convertToEncryptedFile() - detailsBuf:', detailsBuf.toString())
-  console.log('convertToEncryptedFile() - encryptedArray:', encryptedArray.length)
   const finalName = `${await hashAndHex(
     details.name + Date.now().toString()
   )}.jkl`
@@ -171,8 +227,8 @@ export async function convertToEncryptedFile(
 }
 
 /**
- * Converts raw Blob to decrypted File.
- * @param {Buffer} source - Source raw Blob.
+ * Converts raw NodeJS Buffer to decrypted File.
+ * @param {Buffer} source - Source raw Buffer.
  * @param {CryptoKey} key - AES-256 CryptoKey.
  * @param {Buffer} iv - AES-256 iv.
  * @returns {Promise<File>} - Decrypted File.
@@ -182,20 +238,13 @@ export async function convertFromEncryptedFile(
   key: CryptoKey,
   iv: Uint8Array
 ): Promise<File> {
-
   let detailsBuf = Buffer.from('')
   const bufParts: Buffer[] = []
   for (let i = 0; i < source.length; ) {
     const offset = i + 8
-    console.log('convertFromEncryptedFile - offset:', offset)
-    console.log('convertFromEncryptedFile - raw segSize:', source.slice(i, offset).toString())
     const segSize = Number(source.slice(i, offset).toString())
-    console.log('convertFromEncryptedFile - segSize:', segSize)
     const last = offset + segSize
     const segment = source.slice(offset, last)
-    console.log('convertFromEncryptedFile - segment.toString():', segment.toString())
-    console.log('convertFromEncryptedFile - segment.length:', segment.length)
-
     const dec = await aesCrypt(segment, key, iv, 'decrypt')
     if (i === 0) {
       detailsBuf = dec
@@ -204,8 +253,6 @@ export async function convertFromEncryptedFile(
     }
     i = last
   }
-  console.log('convertFromEncryptedFile() - detailsBuf:', detailsBuf.toString())
-  console.log('convertFromEncryptedFile() - bufParts:', bufParts.length)
   const details = JSON.parse(detailsBuf.toString())
   const abArray = bufParts.map((el) => el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength))
   return new File(abArray, details.name, details)

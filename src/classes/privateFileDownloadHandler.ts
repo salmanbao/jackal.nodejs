@@ -1,12 +1,13 @@
 import { Buffer } from 'node:buffer'
 
 import { IFileDownloadHandler } from '@/interfaces/classes'
-import { PrivateFileDownloadHandler } from '@/classes/privateFileDownloadHandler'
 import { convertFromEncryptedFile } from '@/utils/crypt'
 
-export class FileDownloadHandler extends PrivateFileDownloadHandler implements IFileDownloadHandler {
+export class PrivateFileDownloadHandler implements IFileDownloadHandler {
+  protected readonly file: File
+
   protected constructor(file: File) {
-    super(file)
+    this.file = file
   }
 
   /**
@@ -22,6 +23,14 @@ export class FileDownloadHandler extends PrivateFileDownloadHandler implements I
     iv: Uint8Array
   ): Promise<IFileDownloadHandler> {
     const decryptedFile: File = await convertFromEncryptedFile(file, key, iv)
-    return new FileDownloadHandler(decryptedFile)
+    return new PrivateFileDownloadHandler(decryptedFile)
+  }
+
+  /**
+   * Returns downloaded file in decrypted state.
+   * @returns {File}
+   */
+  receiveBacon(): File {
+    return this.file
   }
 }

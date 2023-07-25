@@ -1,5 +1,5 @@
 export * from '@/interfaces/classes/IAbciHandler'
-export * from '@/interfaces/classes/ICustomWallet'
+export * from '@/interfaces/classes/IMnemonicWallet'
 export * from '@/interfaces/classes/IFileDownloadHandler'
 export * from '@/interfaces/classes/IFileIo'
 export * from '@/interfaces/classes/IFileUploadHandler'
