@@ -1,6 +1,6 @@
 {
   "name": "@jackallabs/jackal.nodejs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Javascript Node.js library for interacting with the Jackal Chain",
   "keywords": [
     "jackal",
@@ -53,7 +53,7 @@
     "@cosmjs/proto-signing": "^0.31.0",
     "@cosmjs/stargate": "^0.31.0",
     "eciesjs": "^0.4.2",
-    "@jackallabs/jackal.nodejs-protos": "^1.0.0"
+    "@jackallabs/jackal.nodejs-protos": "^1.0.2"
   },
   "devDependencies": {
     "@btmills/prettier": "^2.8.8",
