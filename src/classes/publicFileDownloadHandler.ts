@@ -6,12 +6,17 @@ import { convertFromPublicFile } from '@/utils/crypt'
 export class PublicFileDownloadHandler implements IFileDownloadHandler {
   protected readonly file: File
 
+  /**
+   * Receives properties from trackFile() to instantiate PublicFileDownloadHandler.
+   * @param {File} file - Downloaded File post-processing
+   * @protected
+   */
   protected constructor(file: File) {
     this.file = file
   }
 
   /**
-   * Creates FileDownloadHandler instance.
+   * Creates PublicFileDownloadHandler instance.
    * @param {NodeJS Buffer} file - Raw file data direct from download source.
    * @returns {Promise<IFileDownloadHandler>} - PublicFileDownloadHandler instance.
    */

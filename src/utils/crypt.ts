@@ -141,7 +141,7 @@ export async function convertToPublicFile(workingFile: File): Promise<File> {
     size: workingFile.size
   }
   const detailsBuf = Buffer.from(JSON.stringify(details))
-  const encryptedArray: Buffer[] = [
+  const publicArray: Buffer[] = [
     Buffer.from((detailsBuf.length + 16).toString().padStart(8, '0')),
     detailsBuf
   ]
@@ -149,7 +149,7 @@ export async function convertToPublicFile(workingFile: File): Promise<File> {
     const bufChunk = Buffer.from(
       await workingFile.slice(i, i + chunkSize).arrayBuffer()
     )
-    encryptedArray.push(
+    publicArray.push(
       Buffer.from((bufChunk.length + 16).toString().padStart(8, '0')),
       bufChunk
     )
@@ -157,7 +157,7 @@ export async function convertToPublicFile(workingFile: File): Promise<File> {
   const finalName = `${await hashAndHex(
     details.name + Date.now().toString()
   )}.jkl`
-  const abArray = encryptedArray.map((el) =>
+  const abArray = publicArray.map((el) =>
     el.buffer.slice(el.byteOffset, el.byteOffset + el.byteLength)
   )
   return new File(abArray, finalName, { type: 'text/plain' })
@@ -165,7 +165,7 @@ export async function convertToPublicFile(workingFile: File): Promise<File> {
 
 /**
  * Converts raw Public-mode NodeJS Buffer to File.
- * @param {Buffer} source - Source raw Blob.
+ * @param {Buffer} source - Source raw NodeJS Buffer.
  * @returns {Promise<File>} - Decrypted File.
  */
 export async function convertFromPublicFile(source: Buffer): Promise<File> {

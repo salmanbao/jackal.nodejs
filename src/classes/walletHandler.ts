@@ -377,6 +377,7 @@ export class WalletHandler implements IWalletHandler {
  * @param {string} acct - The wallet address matching the chainId.
  * @param {IMnemonicWallet} walletExtension - Custom wallet session to use for signArbitrary() call.
  * @returns {Promise<string>} - Generated signature.
+ * @private
  */
 async function makeSecret(
   acct: string,
@@ -396,6 +397,7 @@ async function makeSecret(
  * @param {IWalletConfig} config - Config items needed to create a signing WalletHandler.
  * @param {IMnemonicWallet} session - CustomWallet instance.
  * @returns {Promise<{traits: IWalletHandlerPublicProperties, properties: IWalletHandlerPrivateProperties}>}
+ * @private
  */
 async function processWallet(config: IWalletConfig, session: IMnemonicWallet) {
   const { signerChain, queryAddr, txAddr } = config

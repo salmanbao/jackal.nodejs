@@ -1,4 +1,4 @@
-import { IChildDirInfo, IFolderFileFrame } from '@/interfaces'
+import { IChildDirInfo, IFolderFrame } from '@/interfaces'
 import { IFileMeta, IFileMetaHashMap } from '@/interfaces/file'
 import { IWalletHandler } from '@/interfaces/classes'
 import { EncodeObject } from '@cosmjs/proto-signing'
@@ -11,7 +11,7 @@ export interface IFolderHandler {
   getWhoOwnsMe(): string
   getMyPath(): string
   getMyChildPath(child: string): string
-  getFolderDetails(): IFolderFileFrame
+  getFolderDetails(): IFolderFrame
   getChildDirs(): string[]
   getChildFiles(): { [name: string]: IFileMeta }
   getForFiletree(walletRef: IWalletHandler): Promise<EncodeObject>

@@ -28,7 +28,7 @@ import {
   IChildDirInfo,
   IDownloadDetails,
   IFiletreeParsedContents,
-  IFolderFileFrame,
+  IFolderFrame,
   IMiner,
   IMsgPartialPostFileBundle,
   IProviderChecks,
@@ -57,6 +57,7 @@ import {
   IUploadList,
   IUploadListItem
 } from '@/interfaces/file'
+import { PublicFileDownloadHandler } from '@/classes/publicFileDownloadHandler'
 
 export class FileIo implements IFileIo {
   private readonly walletRef: IWalletHandler
@@ -64,6 +65,13 @@ export class FileIo implements IFileIo {
   private availableProviders: IMiner[]
   private currentProvider: IMiner
 
+  /**
+   * Receives properties from trackIo() to instantiate FileIo.
+   * @param {IWalletHandler} wallet - WalletHandler instance for QueryHandler and ProtoHandler management.
+   * @param {IMiner[]} providers - Array of filtered Provider details to cycle through for uploads.
+   * @param {IMiner} currentProvider - Starting active upload Provider.
+   * @private
+   */
   private constructor(
     wallet: IWalletHandler,
     providers: IMiner[],
@@ -75,6 +83,12 @@ export class FileIo implements IFileIo {
     this.currentProvider = currentProvider
   }
 
+  /**
+   * Creates FileIo instance.
+   * @param {IWalletHandler} wallet - WalletHandler instance.
+   * @param {string | string[]} versionFilter - Optional minimum chain version flag. Blocks all Providers if undefined. (Optional)
+   * @returns {Promise<FileIo>}
+   */
   static async trackIo(
     wallet: IWalletHandler,
     versionFilter?: string | string[]
@@ -88,6 +102,13 @@ export class FileIo implements IFileIo {
     const provider = providers[getRandomIndex(providers.length)]
     return new FileIo(wallet, providers, provider)
   }
+
+  /**
+   * Fetches and categorizes all providers registered to network.
+   * @param {IWalletHandler} wallet - WalletHandler instance.
+   * @param {string | string[]} versionFilter - Optional minimum chain version flag. Blocks all Providers if undefined. (Optional)
+   * @returns {Promise<IProviderChecks>}
+   */
   static async checkProviders(
     wallet: IWalletHandler,
     versionFilter?: string | string[]
@@ -105,25 +126,55 @@ export class FileIo implements IFileIo {
     }
   }
 
+  /**
+   * Expose active Provider for uploads.
+   * @returns {IMiner}
+   */
   getCurrentProvider(): IMiner {
     return this.currentProvider
   }
+
+  /**
+   * Expose all active Providers available for uploads.
+   * @returns {IMiner[]}
+   */
   getAvailableProviders(): IMiner[] {
     return this.availableProviders
   }
+
+  /**
+   * Set active Provider for uploads.
+   * @param {IMiner} toSet
+   */
   forceProvider(toSet: IMiner): void {
     this.currentProvider = toSet
   }
+
+  /**
+   * Remove problem Provider from list and select new active Provider.
+   * @param {string} exclude - Provider address to exclude.
+   * @returns {Promise<void>}
+   */
   async clearProblems(exclude: string): Promise<void> {
     this.availableProviders = this.availableProviders.filter(
       (prov) => prov.ip !== exclude
     )
     await this.shuffle()
   }
+
+  /**
+   * Randomly selects new active Provider from list of active Providers available for uploads.
+   * @returns {Promise<void>}
+   */
   async shuffle(): Promise<void> {
     this.currentProvider =
       this.availableProviders[getRandomIndex(this.availableProviders.length)]
   }
+
+  /**
+   * Re-queries network for Providers and randomly selects new active Provider.
+   * @returns {Promise<void>}
+   */
   async refresh(): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'refresh'))
@@ -135,6 +186,11 @@ export class FileIo implements IFileIo {
       this.availableProviders[getRandomIndex(this.availableProviders.length)]
   }
 
+  /**
+   * Converts File-based folder(s) to FileTree-based folder(s).
+   * @param {string[]} toCheck - Folder paths (without s/) to check and convert.
+   * @returns {Promise<void>}
+   */
   async migrate(toCheck: string[]): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'migrate'))
@@ -174,6 +230,12 @@ export class FileIo implements IFileIo {
     }
   }
 
+  /**
+   * Create new Subfolder(s) with single shared parent Folder. Wrapper for rawCreateFolders().
+   * @param {IFolderHandler} parentDir - Parent Folder instance.
+   * @param {string[]} newDirs - Name(s) of Subfolder(s) to create.
+   * @returns {Promise<void>}
+   */
   async createFolders(
     parentDir: IFolderHandler,
     newDirs: string[]
@@ -185,6 +247,13 @@ export class FileIo implements IFileIo {
     const memo = ``
     await pH.debugBroadcaster(readyToBroadcast, { memo, step: false })
   }
+
+  /**
+   * Creates and returns FileTree EncodeObject instances for external consumption by a signAndBroadcast.
+   * @param {IFolderHandler} parentDir - Parent Folder instance.
+   * @param {string[]} newDirs - Name(s) of Subfolder(s) to create.
+   * @returns {Promise<EncodeObject[]>}
+   */
   async rawCreateFolders(
     parentDir: IFolderHandler,
     newDirs: string[]
@@ -200,6 +269,12 @@ export class FileIo implements IFileIo {
     }
     return result.encoded
   }
+
+  /**
+   * Check if base Folders exist and create if not found.
+   * @param {string[]} toCheck - Name(s) of base Folder(s) to check.
+   * @returns {Promise<number>}
+   */
   async verifyFoldersExist(toCheck: string[]): Promise<number> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'verifyFoldersExist'))
@@ -227,6 +302,14 @@ export class FileIo implements IFileIo {
     }
     return toCreate.length
   }
+
+  /**
+   * Uploads file(s) and queues successes into batches for wallet prompts.
+   * @param {IUploadList} sourceHashMap - Map of all files, key is file name.
+   * @param {IFolderHandler} parent - Folder the files are being uploaded to.
+   * @param {IStaggeredTracker} tracker - External access to completion progress. Not yet implemented.
+   * @returns {Promise<void>}
+   */
   async staggeredUploadFiles(
     sourceHashMap: IUploadList,
     parent: IFolderHandler,
@@ -306,6 +389,13 @@ export class FileIo implements IFileIo {
       }
     } while (Object.keys(queueHashMap).length > 0)
   }
+
+  /**
+   * Saves completed uploads to FileTree.
+   * @param {IQueueItemPostUpload[]} ids - Bundle(s) of details on uploaded file(s).
+   * @returns {Promise<EncodeObject[]>}
+   * @private
+   */
   private async rawAfterUpload(
     ids: IQueueItemPostUpload[]
   ): Promise<EncodeObject[]> {
@@ -360,6 +450,12 @@ export class FileIo implements IFileIo {
     ready.unshift(ready.pop() as EncodeObject[])
     return [...needingReset, ...ready.flat()]
   }
+
+  /**
+   * Fetches FileTree data for target Folder and creates Handler instance.
+   * @param {string} rawPath - Full path to Folder. Example: s/Node/Pictures.
+   * @returns {Promise<IFolderHandler>}
+   */
   async downloadFolder(rawPath: string): Promise<IFolderHandler> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'downloadFolder'))
@@ -381,9 +477,15 @@ export class FileIo implements IFileIo {
       }
       return await FolderHandler.trackNewFolder(folderDetails)
     } else {
-      return await FolderHandler.trackFolder(data as IFolderFileFrame)
+      return await FolderHandler.trackFolder(data as IFolderFrame)
     }
   }
+  /**
+   * Download File.
+   * @param {IDownloadDetails} downloadDetails - Details needed to find file.
+   * @param {{track: number}} completion - External access to download progress.
+   * @returns {Promise<IFileDownloadHandler>}
+   */
   async downloadFile(
     downloadDetails: IDownloadDetails,
     completion: { track: number }
@@ -463,35 +565,69 @@ export class FileIo implements IFileIo {
       throw new Error('No available providers!')
     }
   }
-  async deleteHome(): Promise<void> {
+
+  /**
+   * Locate and download file using unique FID.
+   * @param {string} fid - FID for target File.
+   * @param {{track: number}} completion - External access to download progress.
+   * @returns {Promise<IFileDownloadHandler>}
+   */
+  async downloadFileByFid(
+    fid: string,
+    completion: { track: number }
+  ): Promise<IFileDownloadHandler> {
     if (!this.walletRef.traits)
-      throw new Error(signerNotEnabled('FileIo', 'deleteHome'))
-    const pH = this.walletRef.getProtoHandler()
-    let parent
-    try {
-      parent = await this.downloadFolder(`s/Home`)
-    } catch (err: any) {
-      console.error(err)
-      console.warn('Override engaged')
-      parent = await FolderHandler.trackNewFolder({
-        myName: '',
-        myParent: '',
-        myOwner: ''
-      })
-    }
-    const moreTargets = [
-      ...new Set([
-        ...(parent.getChildDirs() || []),
-        ...Object.keys(parent.getChildFiles() || {})
-      ])
-    ]
-    const readyToBroadcast = await this.rawDeleteTargets(moreTargets, parent)
-    readyToBroadcast.push(
-      ...(await this.makeDelete(this.walletRef.getJackalAddress(), [`s/Home`]))
+      throw new Error(signerNotEnabled('FileIo', 'downloadFileByFid'))
+    const fileProviders = verifyFileProviderIps(
+      (await this.qH.storageQuery.queryFindFile({ fid })).value
     )
-    const memo = ``
-    await pH.debugBroadcaster(readyToBroadcast, { memo, step: false })
+    if (fileProviders && fileProviders.length) {
+      for (let i = 0; i < fileProviders.length; i++) {
+        const url = `${fileProviders[i].replace(/\/+$/, '')}/download/${fid}`
+        try {
+          const resp = await fetch(url)
+          const contentLength = resp.headers.get('Content-Length')
+          if (!resp.body) throw new Error()
+          const reader = resp.body.getReader()
+          let receivedLength = 0
+          let chunks = []
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) {
+              break
+            }
+            chunks.push(value)
+            receivedLength += value.length
+            completion.track =
+              Math.floor((receivedLength / Number(contentLength)) * 100) || 1
+          }
+          const rawFile = chunks.reduce((acc, curr) => {
+            acc.push(...curr)
+            return acc
+          }, [] as number[])
+          return await PublicFileDownloadHandler.trackFile(Buffer.from(rawFile))
+        } catch (err) {
+          const attempt = i + 1
+          const remaining = fileProviders.length - attempt
+          console.warn(
+            `File fetch() failed. Attempt #${attempt}. ${remaining} attempts remaining`
+          )
+          console.error(err)
+          console.warn(`Bad file provider url: ${url}`)
+        }
+      }
+      throw new Error('All file fetch() attempts failed!')
+    } else {
+      throw new Error('No available providers!')
+    }
   }
+
+  /**
+   * Deletes target Folder(s) and sub folders/files. Wraps rawDeleteTargets().
+   * @param {string[]} targets - Target Folder(s) and/or files and children.
+   * @param {IFolderHandler} parent - Parent Folder that is NOT being deleted.
+   * @returns {Promise<void>}
+   */
   async deleteTargets(
     targets: string[],
     parent: IFolderHandler
@@ -512,6 +648,13 @@ export class FileIo implements IFileIo {
     const memo = ``
     await pH.debugBroadcaster(readyToBroadcast, { memo, step: false })
   }
+
+  /**
+   * Creates and returns FileTree and Storage EncodeObject instances for external consumption by a signAndBroadcast.
+   * @param {string[]} targets - Target Folder(s) and/or files and children.
+   * @param {IFolderHandler} parent - Parent Folder that is NOT being deleted.
+   * @returns {Promise<EncodeObject[]>}
+   */
   async rawDeleteTargets(
     targets: string[],
     parent: IFolderHandler
@@ -561,6 +704,13 @@ export class FileIo implements IFileIo {
     }
     return encoded
   }
+
+  /**
+   * Creates target base Folders and inits storage if provided. Wraps rawGenerateInitialDirs().
+   * @param {EncodeObject | null} initMsg - Msg to init storage if needed.
+   * @param {string[]} startingDirs - Base Folders to create. (Optional)
+   * @returns {Promise<void>}
+   */
   async generateInitialDirs(
     initMsg: EncodeObject | null,
     startingDirs?: string[]
@@ -579,6 +729,13 @@ export class FileIo implements IFileIo {
         console.error('generateInitialDirs() -', err)
       })
   }
+
+  /**
+   * Creates and returns FileTree EncodeObject instances for external consumption by a signAndBroadcast.
+   * @param {EncodeObject | null} initMsg - Msg to init storage if needed.
+   * @param {string[]} startingDirs - Base Folders to create. (Optional)
+   * @returns {Promise<EncodeObject[]>}
+   */
   async rawGenerateInitialDirs(
     initMsg: EncodeObject | null,
     startingDirs?: string[]
@@ -599,6 +756,12 @@ export class FileIo implements IFileIo {
     readyToBroadcast.push(await this.createRoot(), ...dirMsgs)
     return readyToBroadcast
   }
+
+  /**
+   * Converts File-based Folders to FileTree-based Folders. Wraps rawConvertFolderType().
+   * @param {string} rawPath - Full path to the target Folder.
+   * @returns {Promise<IFolderHandler>}
+   */
   async convertFolderType(rawPath: string): Promise<IFolderHandler> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'convertFolderType'))
@@ -612,6 +775,12 @@ export class FileIo implements IFileIo {
       })
     return await this.downloadFolder(rawPath)
   }
+
+  /**
+   * Creates and returns FileTree and Storage EncodeObject instances for external consumption by a signAndBroadcast.
+   * @param {string} rawPath - Full path to the target Folder.
+   * @returns {Promise<EncodeObject[]>}
+   */
   async rawConvertFolderType(rawPath: string): Promise<EncodeObject[]> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'rawConvertFolderType'))
@@ -634,6 +803,12 @@ export class FileIo implements IFileIo {
     }
     return encoded
   }
+
+  /**
+   * Determine if a Folder is File or FileTree based.
+   * @param {string} rawPath - Full path to the target Folder.
+   * @returns {Promise<IFolderHandler | null>} - Returns FolderHandler instance if Folder is FileTree-based.
+   */
   async checkFolderIsFileTree(rawPath: string): Promise<IFolderHandler | null> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'checkFolderIsFileTree'))
@@ -646,7 +821,7 @@ export class FileIo implements IFileIo {
       ).catch((err: Error) => {
         throw err
       })
-      return await FolderHandler.trackFolder(data as IFolderFileFrame).catch(
+      return await FolderHandler.trackFolder(data as IFolderFrame).catch(
         (err: Error) => {
           console.error(err)
           return FolderHandler.trackNewFolder({
@@ -661,6 +836,15 @@ export class FileIo implements IFileIo {
       return null
     }
   }
+
+  /**
+   * Generate FolderHandler for target new folder. Used by rawGenerateInitialDirs().
+   * @param {string} pathName - Name of Folder.
+   * @param {string} parentPath - Full path to parent Folder.
+   * @param {string} creator - Bech32 address of owner.
+   * @returns {Promise<EncodeObject>}
+   * @private
+   */
   private async createFileTreeFolderMsg(
     pathName: string,
     parentPath: string,
@@ -676,6 +860,14 @@ export class FileIo implements IFileIo {
     const handler = await FolderHandler.trackNewFolder(folderDetails)
     return await handler.getForFiletree(this.walletRef)
   }
+
+  /**
+   * Creates and returns FileTree and Storage EncodeObject instances for external consumption by a signAndBroadcast.
+   * @param {string} creator - Bech32 address of owner.
+   * @param {string[]} targets - Full path to deletion target.
+   * @returns {Promise<EncodeObject[]>}
+   * @private
+   */
   private async makeDelete(
     creator: string,
     targets: string[]
@@ -719,6 +911,14 @@ export class FileIo implements IFileIo {
     )
     return readyToDelete.flat()
   }
+
+  /**
+   * Upload Files via Fetch and gracefully rollover to next provider if upload fails.
+   * @param {string} sender - Bech32 address of owner.
+   * @param {File} file - File to upload.
+   * @returns {Promise<IProviderModifiedResponse>}
+   * @private
+   */
   private async tumbleUpload(
     sender: string,
     file: File
@@ -740,6 +940,12 @@ export class FileIo implements IFileIo {
     console.log('Provider Options Exhausted')
     return { fid: [''], cid: '' }
   }
+
+  /**
+   * Create s/.
+   * @returns {Promise<EncodeObject>}
+   * @private
+   */
   private async createRoot() {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'createRoot'))
@@ -768,14 +974,25 @@ export class FileIo implements IFileIo {
 }
 
 /** Helpers */
+/**
+ * Check if File exists on chain and fetch details if so.
+ * @param {IFileUploadHandler} data - File to check
+ * @param {string} ownerAddr - Bech32 address of owner.
+ * @param {IWalletHandler} walletRef - WalletHandler instance.
+ * @returns {Promise<{file: File, cfg: IFileConfigRaw}>}
+ * @private
+ */
 async function prepExistingUpload(
   data: IFileUploadHandler,
   ownerAddr: string,
   walletRef: IWalletHandler
 ): Promise<{ file: File; cfg: IFileConfigRaw }> {
+  const hexedOwner = await hashAndHex(
+    `o${await data.getFullMerkle()}${await hashAndHex(ownerAddr)}`
+  )
   const fileChainResult = await getFileTreeData(
-    `${data.getWhereAmI()}/${data.getWhoAmI()}`,
-    ownerAddr,
+    await data.getFullMerkle(),
+    hexedOwner,
     walletRef.getQueryHandler()
   )
   const typedData = fileChainResult.value.files as Files
@@ -792,17 +1009,21 @@ async function prepExistingUpload(
   }
 }
 
+/**
+ * Process upload to Provider via Fetch.
+ * @param {string} url - URL of Provider to upload to.
+ * @param {string} sender - Bech32 address of owner.
+ * @param {File} file - File to upload.
+ * @returns {Promise<IProviderModifiedResponse>}
+ * @private
+ */
 async function doUpload(
   url: string,
   sender: string,
   file: File
 ): Promise<IProviderModifiedResponse> {
   const fileFormData = new FormData()
-  fileFormData.append(
-    'file',
-    new globalThis.Blob([await file.arrayBuffer()]),
-    file.name
-  )
+  fileFormData.set('file', file)
   fileFormData.set('sender', sender)
   return await fetch(url, { method: 'POST', body: fileFormData as FormData })
     .then((resp): Promise<IProviderResponse> => {
@@ -813,18 +1034,34 @@ async function doUpload(
     .then((resp) => {
       return { fid: [resp.fid], cid: resp.cid }
     })
-    .catch((err: Error) => {
+    .catch((err) => {
       throw err
     })
 }
 
+/**
+ * Query for list of all usable Providers.
+ * @param {IQueryHandler} qH - QueryHandler instance.
+ * @param {number} max - Maximum number of Providers to return.
+ * @returns {Promise<IMiner[]>}
+ * @private
+ */
 async function getProviders(
   qH: IQueryHandler,
   max?: number
 ): Promise<IMiner[]> {
   const rawProviderList = await fetchProviders(qH)
+  console.info('Raw Providers')
+  console.dir(rawProviderList)
   return filterProviders(rawProviderList, max)
 }
+
+/**
+ * Query for list of all registered Providers.
+ * @param {IQueryHandler} qH - QueryHandler instance.
+ * @returns {Promise<IMiner[]>}
+ * @private
+ */
 async function fetchProviders(qH: IQueryHandler): Promise<IMiner[]> {
   return (
     await handlePagination(qH.storageQuery, 'queryProvidersAll', {})
@@ -833,6 +1070,14 @@ async function fetchProviders(qH: IQueryHandler): Promise<IMiner[]> {
     return acc
   }, [])
 }
+
+/**
+ * Filters array of Providers to remove invalid addresses.
+ * @param {IMiner[]} rawProviderList - Array from providers to filter.
+ * @param {number} max - Maximum number of Providers to return.
+ * @returns {Promise<IMiner[]>}
+ * @private
+ */
 async function filterProviders(rawProviderList: IMiner[], max?: number) {
   const disallowList = [
     /example/,
@@ -852,6 +1097,15 @@ async function filterProviders(rawProviderList: IMiner[], max?: number) {
   })
   return filteredProviders.slice(0, Number(max) || 1000)
 }
+
+/**
+ * Check array of Providers are accessible and operating on correct network.
+ * @param {IMiner[]} providers - Array from providers to check.
+ * @param {string} chainId - Network id to check against.
+ * @param {string | string[]} versionFilter - Provider version(s) to check against.
+ * @returns {Promise<IMiner[]>}
+ * @private
+ */
 async function verifyProviders(
   providers: IMiner[],
   chainId: string,
@@ -884,7 +1138,14 @@ async function verifyProviders(
             versionFilter === undefined || verRegEx.test(parsed.version)
           return res.ok && chainCheck && verCheck
         })
-        .catch((_: Error) => {
+        .catch((err: Error) => {
+          console.warn('verifyProviders() Error')
+          console.error(err)
+          if (err.message.includes('AbortSignal')) {
+            alert(
+              'AbortSignal.timeout() error! Chromium family version 103+ required!'
+            )
+          }
           return false
         })
       return result
@@ -895,6 +1156,13 @@ async function verifyProviders(
   console.dir(verified)
   return verified
 }
+
+/**
+ * Sanity check FID host Provider addresses.
+ * @param {QueryFindFileResponse} resp - FileTree query response to check.
+ * @returns {string[] | false}
+ * @private
+ */
 function verifyFileProviderIps(resp: QueryFindFileResponse): string[] | false {
   if (!resp) {
     console.error('Invalid resp passed to verifyFileProviderIps()')
@@ -913,12 +1181,21 @@ function verifyFileProviderIps(resp: QueryFindFileResponse): string[] | false {
   }
   try {
     return JSON.parse(resp.providerIps)
-  } catch (err: any) {
+  } catch (err) {
     console.error('JSON.parse() failed in verifyFileProviderIps()')
     console.error(err)
     return false
   }
 }
+
+/**
+ * Verify Msg creator is owner of File contract.
+ * @param {IQueryHandler} qH - QueryHandler instance.
+ * @param {string} cid - CID to check against.
+ * @param {string} owner - Bech32 address of owner to compare to CID.
+ * @returns {Promise<boolean>}
+ * @private
+ */
 async function matchOwnerToCid(
   qH: IQueryHandler,
   cid: string,
@@ -933,6 +1210,14 @@ async function matchOwnerToCid(
     .strays as Strays
   return straysResult.signee === owner
 }
+
+/**
+ * Timer used by staggeredUploadFiles() to manage queues.
+ * @param {number} target - Total to process.
+ * @param {IStaggeredTracker} tracker - Current completed.
+ * @returns {Promise<void>}
+ * @private
+ */
 async function statusCheck(
   target: number,
   tracker: IStaggeredTracker
