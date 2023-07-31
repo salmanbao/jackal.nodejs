@@ -20,7 +20,7 @@ import { EncodeObject } from '@cosmjs/proto-signing'
 import { TPropStatus } from '@/types/TPropStatus'
 import { signerNotEnabled } from '@/utils/misc'
 
-export default class GovHandler implements IGovHandler {
+export class GovHandler implements IGovHandler {
   private readonly walletRef: IWalletHandler
   private readonly qH: IQueryHandler
 

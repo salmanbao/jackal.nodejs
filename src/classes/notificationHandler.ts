@@ -16,7 +16,7 @@ import {
 } from '@jackallabs/jackal.nodejs-protos'
 import { IReadableNoti } from '@/interfaces'
 
-export default class NotificationHandler implements INotificationHandler {
+export class NotificationHandler implements INotificationHandler {
   private readonly walletRef: IWalletHandler
   private readonly qH: IQueryHandler
 
