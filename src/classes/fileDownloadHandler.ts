@@ -25,7 +25,9 @@ export class FileDownloadHandler
     key: CryptoKey,
     iv: Uint8Array
   ): Promise<IFileDownloadHandler> {
-    deprecated('FileDownloadHandler', '1.0.0', { replacement: 'PrivateFileDownloadHandler' })
+    deprecated('FileDownloadHandler', '1.0.0', {
+      replacement: 'PrivateFileDownloadHandler'
+    })
     const decryptedFile: File = await convertFromEncryptedFile(file, key, iv)
     return new FileDownloadHandler(decryptedFile)
   }
