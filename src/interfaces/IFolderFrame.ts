@@ -1,6 +1,6 @@
 import { IFolderChildFiles } from '@/interfaces'
 
-export interface IFolderFileFrame {
+export interface IFolderFrame {
   whoAmI: string
   whereAmI: string
   whoOwnsMe: string

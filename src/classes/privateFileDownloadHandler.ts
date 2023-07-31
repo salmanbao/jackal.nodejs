@@ -6,12 +6,17 @@ import { convertFromEncryptedFile } from '@/utils/crypt'
 export class PrivateFileDownloadHandler implements IFileDownloadHandler {
   protected readonly file: File
 
+  /**
+   * Receives properties from trackFile() to instantiate PrivateFileDownloadHandler.
+   * @param {File} file - Downloaded File post-processing
+   * @protected
+   */
   protected constructor(file: File) {
     this.file = file
   }
 
   /**
-   * Creates FileDownloadHandler instance.
+   * Creates PrivateFileDownloadHandler instance.
    * @param {NodeJS Buffer} file - Raw file data direct from download source.
    * @param {CryptoKey} key - AES-256 CryptoKey.
    * @param {Uint8Array} iv - AES-256 iv.

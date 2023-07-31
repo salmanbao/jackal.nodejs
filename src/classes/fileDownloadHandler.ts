@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import { IFileDownloadHandler } from '@/interfaces/classes'
 import { PrivateFileDownloadHandler } from '@/classes/privateFileDownloadHandler'
 import { convertFromEncryptedFile } from '@/utils/crypt'
+import { deprecated } from '@/utils/misc'
 
 export class FileDownloadHandler
   extends PrivateFileDownloadHandler
@@ -24,6 +25,9 @@ export class FileDownloadHandler
     key: CryptoKey,
     iv: Uint8Array
   ): Promise<IFileDownloadHandler> {
+    deprecated('FileDownloadHandler', '1.0.0', {
+      replacement: 'PrivateFileDownloadHandler'
+    })
     const decryptedFile: File = await convertFromEncryptedFile(file, key, iv)
     return new FileDownloadHandler(decryptedFile)
   }
