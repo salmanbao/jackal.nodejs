@@ -1,6 +1,6 @@
 {
   "name": "@jackallabs/jackal.nodejs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Javascript Node.js library for interacting with the Jackal Chain",
   "keywords": [
     "jackal",

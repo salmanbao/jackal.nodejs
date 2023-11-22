@@ -111,7 +111,7 @@ export function finalizeGas(
 ): IGasRate {
   const totalGas = Number(gasOverride) || estimateGas(msgArray)
   return {
-    amount: [],
+    amount: [{ denom: 'ujkl', amount: Math.ceil(totalGas * .002).toString() }],
     gas: totalGas.toString()
   }
 }
