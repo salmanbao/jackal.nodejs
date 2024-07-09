@@ -1056,7 +1056,6 @@ async function getProviders(
 ): Promise<IMiner[]> {
   const rawProviderList = await fetchProviders(qH)
   console.info('Raw Providers')
-  console.dir(rawProviderList)
   return filterProviders(rawProviderList, max)
 }
 
@@ -1143,7 +1142,6 @@ async function verifyProviders(
           return res.ok && chainCheck && verCheck
         })
         .catch((err: Error) => {
-          console.warn('verifyProviders() Error')
           if (err.message.includes('AbortSignal')) {
             alert(
               'AbortSignal.timeout() error! Chromium family version 103+ required!'
@@ -1155,8 +1153,6 @@ async function verifyProviders(
     })
   )
   const verified = providers.filter((_, index) => staged[index])
-  console.info('Verified Providers')
-  console.dir(verified)
   return verified
 }
 
@@ -1186,7 +1182,6 @@ function verifyFileProviderIps(resp: QueryFindFileResponse): string[] | false {
     return JSON.parse(resp.providerIps)
   } catch (err) {
     console.error('JSON.parse() failed in verifyFileProviderIps()')
-    console.error(err)
     return false
   }
 }
