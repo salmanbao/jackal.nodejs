@@ -55,9 +55,11 @@ import {
   IFileConfigRaw,
   IFileMetaHashMap,
   IUploadList,
-  IUploadListItem
+  IUploadListItem,
+  IUploadRespnse
 } from '@/interfaces/file'
 import { PublicFileDownloadHandler } from '@/classes/publicFileDownloadHandler'
+import { DeliverTxResponse } from '@cosmjs/stargate'
 
 export class FileIo implements IFileIo {
   private readonly walletRef: IWalletHandler
@@ -308,13 +310,15 @@ export class FileIo implements IFileIo {
    * @param {IUploadList} sourceHashMap - Map of all files, key is file name.
    * @param {IFolderHandler} parent - Folder the files are being uploaded to.
    * @param {IStaggeredTracker} tracker - External access to completion progress. Not yet implemented.
+   * @param {number|string} gas - gas amount to override calculated gas.
    * @returns {Promise<void>}
    */
   async staggeredUploadFiles(
     sourceHashMap: IUploadList,
     parent: IFolderHandler,
-    tracker: IStaggeredTracker
-  ): Promise<void> {
+    tracker: IStaggeredTracker,
+    gas?: number|string
+  ): Promise<IUploadRespnse> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'staggeredUploadFiles'))
     const pH = this.walletRef.getProtoHandler()
@@ -360,6 +364,7 @@ export class FileIo implements IFileIo {
       console.error(err)
       alert('All Uploads Failed')
     })
+    let responses: {[key: string]: DeliverTxResponse} = {}
     do {
       await statusCheck(sourceKeys.length, tracker)
       const processingNames: any[] = Object.keys(queueHashMap).filter(
@@ -378,16 +383,19 @@ export class FileIo implements IFileIo {
           await parent.addChildFileReferences(fileNames, this.walletRef)
         )
         const memo = `Processing batch of ${processValues.length} uploads`
-        await pH
-          .debugBroadcaster(readyToBroadcast, { memo, step: false })
+        const response = await pH
+          .debugBroadcaster(readyToBroadcast, { gas ,memo, step: false, })
           .catch((err: Error) => {
             throw err
           })
+
+        responses[processValues[0].key] = response
         for (let key of processingNames) {
           delete queueHashMap[key]
         }
       }
     } while (Object.keys(queueHashMap).length > 0)
+      return responses
   }
 
   /**

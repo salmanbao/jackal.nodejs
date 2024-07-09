@@ -1,5 +1,5 @@
 {
-  "name": "@jackallabs/jackal.nodejs",
+  "name": "@salmanbao/jackal.nodejs",
   "version": "1.0.2",
   "description": "Javascript Node.js library for interacting with the Jackal Chain",
   "keywords": [
@@ -42,12 +42,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JackalLabs/jackal.nodejs.git"
+    "url": "git+https://github.com/salmanbao/jackal.nodejs.git"
   },
   "bugs": {
-    "url": "https://github.com/JackalLabs/jackal.nodejs/issues"
+    "url": "https://github.com/salmanbao/jackal.nodejs.git/issues"
   },
-  "homepage": "https://github.com/JackalLabs/jackal.nodejs/#README",
+  "homepage": "https://github.com/salmanbao/jackal.nodejs.git/#README",
   "dependencies": {
     "@cosmjs/launchpad": "^0.27.1",
     "@cosmjs/proto-signing": "^0.31.0",

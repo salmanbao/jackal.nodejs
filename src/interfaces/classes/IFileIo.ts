@@ -1,6 +1,6 @@
 import { EncodeObject } from '@cosmjs/proto-signing'
 import { IFileDownloadHandler, IFolderHandler } from '@/interfaces/classes'
-import { IUploadList } from '@/interfaces/file'
+import { IUploadList, IUploadRespnse } from '@/interfaces/file'
 import { IDownloadDetails, IMiner, IStaggeredTracker } from '@/interfaces'
 
 export interface IFileIo {
@@ -21,8 +21,9 @@ export interface IFileIo {
   staggeredUploadFiles(
     sourceHashMap: IUploadList,
     parent: IFolderHandler,
-    tracker: IStaggeredTracker
-  ): Promise<void>
+    tracker: IStaggeredTracker,
+    gas?: number | string
+  ): Promise<IUploadRespnse>
   downloadFolder(rawPath: string): Promise<IFolderHandler>
   downloadFile(
     downloadDetails: IDownloadDetails,
