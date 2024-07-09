@@ -236,18 +236,20 @@ export class FileIo implements IFileIo {
    * Create new Subfolder(s) with single shared parent Folder. Wrapper for rawCreateFolders().
    * @param {IFolderHandler} parentDir - Parent Folder instance.
    * @param {string[]} newDirs - Name(s) of Subfolder(s) to create.
+   * @param {number|string} gas - Gas amount to use.
    * @returns {Promise<void>}
    */
   async createFolders(
     parentDir: IFolderHandler,
-    newDirs: string[]
+    newDirs: string[],
+    gas:number|string
   ): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'createFolders'))
     const pH = this.walletRef.getProtoHandler()
     const readyToBroadcast = await this.rawCreateFolders(parentDir, newDirs)
     const memo = ``
-    await pH.debugBroadcaster(readyToBroadcast, { memo, step: false })
+    await pH.debugBroadcaster(readyToBroadcast, { gas,memo, step: false })
   }
 
   /**

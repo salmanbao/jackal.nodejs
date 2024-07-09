@@ -12,10 +12,11 @@ export interface IFileIo {
   refresh(): Promise<void>
 
   migrate(toCheck: string[]): Promise<void>
-  createFolders(parentDir: IFolderHandler, newDirs: string[]): Promise<void>
+  createFolders(parentDir: IFolderHandler, newDirs: string[], gas?: number | string): Promise<void>
   rawCreateFolders(
     parentDir: IFolderHandler,
-    newDirs: string[]
+    newDirs: string[],
+    gas?: number | string
   ): Promise<EncodeObject[]>
   verifyFoldersExist(toCheck: string[]): Promise<number>
   staggeredUploadFiles(
