@@ -242,7 +242,7 @@ export class FileIo implements IFileIo {
   async createFolders(
     parentDir: IFolderHandler,
     newDirs: string[],
-    gas:number|string
+    gas?:number|string
   ): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'createFolders'))
@@ -337,7 +337,6 @@ export class FileIo implements IFileIo {
           ? await prepExistingUpload(handler, jackalAddr, this.walletRef).catch(
               (err: Error) => {
                 console.warn('prepExistingUpload() Failed')
-                console.error(err)
                 throw err
               }
             )
@@ -352,7 +351,6 @@ export class FileIo implements IFileIo {
             )
         ).catch((err: Error) => {
           console.warn('tumbleUpload() Failed')
-          console.error(err)
           throw err
         })
         handler.setIds(prom)
@@ -361,9 +359,8 @@ export class FileIo implements IFileIo {
         tracker.complete++
         return 'Done'
       })
-    ).catch((err: Error) => {
+    ).catch(() => {
       console.warn('All Uploads Failed')
-      console.error(err)
       alert('All Uploads Failed')
     })
     let responses: {[key: string]: DeliverTxResponse} = {}
@@ -566,7 +563,6 @@ export class FileIo implements IFileIo {
           console.warn(
             `File fetch() failed. Attempt #${attempt}. ${remaining} attempts remaining`
           )
-          console.error(err)
           console.warn(`Bad file provider url: ${url}`)
         }
       }
@@ -622,7 +618,6 @@ export class FileIo implements IFileIo {
           console.warn(
             `File fetch() failed. Attempt #${attempt}. ${remaining} attempts remaining`
           )
-          console.error(err)
           console.warn(`Bad file provider url: ${url}`)
         }
       }
@@ -942,7 +937,6 @@ export class FileIo implements IFileIo {
       try {
         return await doUpload(url, sender, file)
       } catch (err: any) {
-        console.warn(err)
         await this.clearProblems(ip)
         continue
       }
@@ -1150,7 +1144,6 @@ async function verifyProviders(
         })
         .catch((err: Error) => {
           console.warn('verifyProviders() Error')
-          console.error(err)
           if (err.message.includes('AbortSignal')) {
             alert(
               'AbortSignal.timeout() error! Chromium family version 103+ required!'
