@@ -635,7 +635,8 @@ export class FileIo implements IFileIo {
    */
   async deleteTargets(
     targets: string[],
-    parent: IFolderHandler
+    parent: IFolderHandler,
+    gas?: string | number
   ): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'deleteTargets'))
@@ -651,7 +652,7 @@ export class FileIo implements IFileIo {
       await parent.removeChildDirAndFileReferences(dirs, files, this.walletRef)
     )
     const memo = ``
-    await pH.debugBroadcaster(readyToBroadcast, { memo, step: false })
+    await pH.debugBroadcaster(readyToBroadcast, { gas, memo, step: false })
   }
 
   /**
@@ -718,7 +719,8 @@ export class FileIo implements IFileIo {
    */
   async generateInitialDirs(
     initMsg: EncodeObject | null,
-    startingDirs?: string[]
+    startingDirs?: string[],
+    gas?: string | number
   ): Promise<void> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'generateInitialDirs'))
@@ -729,7 +731,7 @@ export class FileIo implements IFileIo {
     )
     const memo = ``
     await pH
-      .debugBroadcaster(readyToBroadcast, { memo, step: false })
+      .debugBroadcaster(readyToBroadcast, { gas, memo, step: false })
       .catch((err: Error) => {
         console.error('generateInitialDirs() -', err)
       })
@@ -767,14 +769,14 @@ export class FileIo implements IFileIo {
    * @param {string} rawPath - Full path to the target Folder.
    * @returns {Promise<IFolderHandler>}
    */
-  async convertFolderType(rawPath: string): Promise<IFolderHandler> {
+  async convertFolderType(rawPath: string,gas?: string | number): Promise<IFolderHandler> {
     if (!this.walletRef.traits)
       throw new Error(signerNotEnabled('FileIo', 'convertFolderType'))
     const pH = this.walletRef.getProtoHandler()
     const readyToBroadcast = await this.rawConvertFolderType(rawPath)
     const memo = ``
     await pH
-      .debugBroadcaster(readyToBroadcast, { memo, step: false })
+      .debugBroadcaster(readyToBroadcast, { gas, memo, step: false })
       .catch((err: Error) => {
         console.error('convertFolderType() -', err)
       })
